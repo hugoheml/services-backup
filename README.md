@@ -18,7 +18,7 @@ And the following storage classes:
 
 To deploy the application, you can use the provided `docker-compose.yaml`.
 
-1.  Copy the content of the [`docker-compose.yaml`](docker-compose	.yaml:1) file.
+1.  Copy the content of the [`docker-compose.yaml`](docker-compose.yaml) file.
 2.  Modify the environment variables directly in the file to match your configuration.
 3.  Run the application using the following command:
 
@@ -38,7 +38,7 @@ To set up a local development environment:
     ```bash
     npm install
     ```
-3.  Create a `.env` file based on [`.env.example`](.env.example:1) and fill in your configuration. For a local FTP server, the default values should work.
+3.  Create a `.env` file based on [`.env.example`](.env.example) and fill in your configuration. For a local FTP server, the default values should work.
 4.  Run the application in development mode with hot-reloading:
     ```bash
     npm run dev
@@ -71,5 +71,5 @@ Here are the features planned for future releases:
 
 - [ ] Add more detailed error messages, especially for misconfigured environment variables.
 - [ ] Add a maximum storage threshold to avoid filling up the storage space.
-- [ ] Add an alert system (e.g., via Discord) for backup failures.
+- [ ] Add an alert system (e.g. via Discord) for backup failures.
 - [ ] Add support for more services and storage classes.
