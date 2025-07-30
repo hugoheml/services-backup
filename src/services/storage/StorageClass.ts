@@ -5,6 +5,7 @@ export abstract class StorageClass {
 	abstract uploadFile(filePath: string, destination: string): Promise<void>;
 	
 	abstract createFolder(folderPath: string): Promise<void>;
+	abstract deleteFolder(folderPath: string): Promise<void>;
 	abstract folderExists(folderPath: string): Promise<boolean>;
 	abstract folderSizeBytes(folderPath: string): Promise<number>;
 	abstract listFiles(folderPath: string): Promise<FileResult[]>;

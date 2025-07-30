@@ -1,7 +1,7 @@
-import { Client } from "basic-ftp";
+import { Client, FileInfo } from "basic-ftp";
 import { StorageClass } from "../StorageClass";
-import { FileResult } from "../types/FileResult";
 import { logger } from "../../log";
+import { FileResult } from "../types/FileResult";
 
 const { FTP_HOST, FTP_PORT, FTP_USER, FTP_PASSWORD } = process.env;
 
@@ -18,25 +18,50 @@ export class FTPStorage extends StorageClass {
 			host: FTP_HOST,
 			port: +FTP_PORT,
 			user: FTP_USER,
-			password: FTP_PASSWORD
+			password: FTP_PASSWORD,
 		});
 
 		logger.info("Connected to FTP server:", FTP_HOST);
 	}
 
 	async deleteFile(filePath: string) {
-		await this.client.remove(filePath);
-		logger.info("Deleted file:", filePath);
+		try {
+			await this.client.remove(filePath);
+			logger.debug(`Deleted file: ${filePath}`);
+		} catch (error) {
+			logger.error(`Failed to delete file ${filePath}:`, error);
+			throw error;
+		}
 	}
 
 	async uploadFile(filePath: string, destination: string) {
-		await this.client.uploadFrom(filePath, destination);
-		logger.info("Uploaded file:", filePath, "to:", destination);
+		try {
+			await this.client.uploadFrom(filePath, destination);
+			logger.debug(`Uploaded file: ${filePath}, to: ${destination}`);
+		} catch (error) {
+			logger.error(`Failed to upload file ${filePath} to ${destination}:`, error);
+			throw error;
+		}
 	}
 
 	async createFolder(folderPath: string) {
-		await this.client.ensureDir(folderPath);
-		logger.info("Created folder:", folderPath);
+		try {
+			await this.client.ensureDir(folderPath);
+			logger.debug(`Created folder: ${folderPath}`);
+		} catch (error) {
+			logger.error(`Failed to create folder ${folderPath}:`, error);
+			throw error;
+		}
+	}
+
+	async deleteFolder(folderPath: string) {
+		try {
+			await this.client.removeDir(folderPath);
+			logger.debug(`Deleted folder: ${folderPath}`);
+		} catch (error) {
+			logger.error(`Failed to delete folder ${folderPath}:`, error);
+			throw error;
+		}
 	}
 
 	async folderExists(folderPath: string): Promise<boolean> {
@@ -55,15 +80,26 @@ export class FTPStorage extends StorageClass {
 		const list = await this.client.list(folderPath);
 		return list.reduce((total, file) => total + (file.size || 0), 0);
 	}
-	
+
 	async listFiles(folderPath: string) {
-		const list = await this.client.list(folderPath);
-		return list.map(file => ({
-			filePath: file.name,
-			size: file.size || 0,
-			lastModified: file.modifiedAt || new Date(),
-			isDirectory: file.isDirectory
-		}));
+		try {
+			const list = await this.client.list(folderPath);
+
+			const result = [];
+			for await (const file of list) {
+				result.push({
+					fileName: file.name,
+					filePath: `${folderPath}/${file.name}`,
+					size: file.size || 0,
+					lastModified: file.modifiedAt || new Date(),
+					isDirectory: file.isDirectory
+				});
+			}
+			return result;
+		} catch (error) {
+			logger.error(`Failed to list files in folder ${folderPath}:`, error);
+			throw error;
+		}
 	}
 	
 	async close() {
