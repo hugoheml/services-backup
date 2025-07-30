@@ -8,17 +8,17 @@ This project is currently a work in progress. Contributions are welcome! Feel fr
 
 Services Backup is a tool designed to automate the backup of various services. Currently, it supports the following sources:
 
-- **Pterodactyl**
+- [**Pterodactyl**](https://pterodactyl.io/): A game server management panel.
 
 And the following storage classes:
 
-- **FTP**
+- [**FTP**](https://en.wikipedia.org/wiki/File_Transfer_Protocol): A standard network protocol used to transfer files from one host to another over a TCP-based network.
 
 ## Deployment
 
 To deploy the application, you can use the provided `docker-compose.yaml`.
 
-1.  Copy the content of the [`docker-compose.yaml`](docker-compose.yaml:1) file.
+1.  Copy the content of the [`docker-compose.yaml`](docker-compose	.yaml:1) file.
 2.  Modify the environment variables directly in the file to match your configuration.
 3.  Run the application using the following command:
 
