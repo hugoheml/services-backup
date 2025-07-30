@@ -9,6 +9,7 @@ import { logger } from "../log";
 import { BackupListResult } from "./types/BackupListResult";
 import { BackupResult } from "./types/BackupResult";
 import { BackupDownloadResult } from "./types/BackupDownloadResult";
+import { ServerWithBackup } from "./types/ServerWithBackup";
 
 const { PTERODACTYL_URL, PTERODACTYL_API_KEY, PTERODACTYL_FETCH_AS_ADMIN, TMP_DIR } = process.env;
 const PTERODACTYL_FETCH_AS_ADMIN_BOOL = PTERODACTYL_FETCH_AS_ADMIN === "true";
@@ -118,6 +119,19 @@ export async function FetchAllServerBackups(server: ServerResult) {
 			break;
 		}
 	}
+	return result;
+}
+
+export async function FetchAllServersBackups() {
+	const servers = await FetchAllServers();
+	const result: ServerWithBackup[] = [];
+	
+	for (const server of servers) {
+		const backups = await FetchAllServerBackups(server);
+		result.push({ server, backups });
+	}
+	logger.info(`Fetched backups for ${result.length} servers`);
+
 	return result;
 }
 
