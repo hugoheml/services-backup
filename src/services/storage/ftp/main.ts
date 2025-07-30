@@ -24,17 +24,17 @@ export class FTPStorage extends StorageClass {
 		logger.info("Connected to FTP server:", FTP_HOST);
 	}
 
-	async deleteFile(filePath: string): Promise<void> {
+	async deleteFile(filePath: string) {
 		await this.client.remove(filePath);
 		logger.info("Deleted file:", filePath);
 	}
 
-	async uploadFile(filePath: string, destination: string): Promise<void> {
+	async uploadFile(filePath: string, destination: string) {
 		await this.client.uploadFrom(filePath, destination);
 		logger.info("Uploaded file:", filePath, "to:", destination);
 	}
 
-	async createFolder(folderPath: string): Promise<void> {
+	async createFolder(folderPath: string) {
 		await this.client.ensureDir(folderPath);
 		logger.info("Created folder:", folderPath);
 	}
@@ -51,12 +51,12 @@ export class FTPStorage extends StorageClass {
 		}
 	}
 
-	async folderSizeBytes(folderPath: string): Promise<number> {
+	async folderSizeBytes(folderPath: string) {
 		const list = await this.client.list(folderPath);
 		return list.reduce((total, file) => total + (file.size || 0), 0);
 	}
 	
-	async listFiles(folderPath: string): Promise<FileResult[]> {
+	async listFiles(folderPath: string) {
 		const list = await this.client.list(folderPath);
 		return list.map(file => ({
 			filePath: file.name,
