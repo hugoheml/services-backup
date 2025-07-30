@@ -1,0 +1,8 @@
+dist/
+node_modules/
+docker/
+tmp/
+.env
+docker-compose-dev.yaml
+README.md
+Dockerfile
