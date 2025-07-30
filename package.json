@@ -1,0 +1,25 @@
+{
+  "name": "services-backup",
+  "version": "1.0.0",
+  "description": "Backup your services in specific file storages systems",
+  "main": "dist/main.ts",
+  "scripts": {
+    "start": "tsc && node dist/main.js",
+    "build": "tsc",
+    "dev": "nodemon --exec ts-node src/main.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hugoheml/services-backup.git"
+  },
+  "author": "Hugo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hugoheml/services-backup/issues"
+  },
+  "homepage": "https://github.com/hugoheml/services-backup#readme",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
