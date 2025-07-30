@@ -1,0 +1,18 @@
+services:
+  services-backup:
+    image: ghcr.io/hugoheml/services-backup:v1.0.0-beta.0
+    environment:
+      - BACKUP_PTERODACTYL=true
+      - PTERODACTYL_URL=<PTERODACTYL_URL>
+      - PTERODACTYL_API_KEY=<PTERODACTYL_API_KEY>
+      - PTERODACTYL_FETCH_AS_ADMIN=true
+      - PTERODACTYL_FOLDER_PATH=/pterodactyl/servers
+
+      - STORAGE_TYPE=ftp
+      - FTP_HOST=<FTP_HOST>
+      - FTP_PORT=<FTP_PORT>
+      - FTP_USER=<FTP_USER>
+      - FTP_PASSWORD=<FTP_PASSWORD>
+
+      - MAX_BACKUP_PER_ELEMENT=<MAX_BACKUP_PER_ELEMENT>
+      - MAX_BACKUP_RETENTION_DAYS=<MAX_BACKUP_RETENTION_DAYS>
