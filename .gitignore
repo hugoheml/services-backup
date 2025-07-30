@@ -140,3 +140,7 @@ vite.config.ts.timestamp-*
 
 # Temp folder
 tmp/
+
+# Docker volumes folder
+docker/volumes/*
+!docker/volumes/.gitkeep
