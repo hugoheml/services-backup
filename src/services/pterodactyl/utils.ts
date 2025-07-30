@@ -135,6 +135,12 @@ export async function FetchAllServersBackups() {
 	return result;
 }
 
+export function GetBackupFileName(server: ServerResult, backup: BackupResult): string {
+	const sanitizedBackupName = backup.attributes.name.replace(/[^a-zA-Z0-9]/g, "-");
+
+	return `${server.attributes.identifier}-${sanitizedBackupName}-${backup.attributes.uuid}.tar.gz`;
+}
+
 export async function DownloadServerBackup(server: ServerResult, backup: BackupResult) {
 	const path = `/api/client/servers/${server.attributes.identifier}/backups/${backup.attributes.uuid}/download`;
 	const response = await SendRequest<BackupDownloadResult>(path, HTTPMethod.GET);
@@ -148,7 +154,7 @@ export async function DownloadServerBackup(server: ServerResult, backup: BackupR
 		throw new Error(`Failed to download backup ${backup.attributes.name} of server ${server.attributes.name}: ${downloadResponse.status}`);
 	}
 
-	const filePath = `${DOWNLOAD_DIRECTORY}/${server.attributes.identifier}-${backup.attributes.name.replace(/[^a-zA-Z0-9]/g, "-")}.tar.gz`;
+	const filePath = `${DOWNLOAD_DIRECTORY}/${GetBackupFileName(server, backup)}`;
 	const fileStream = createWriteStream(filePath);
 	const readableStream = downloadResponse.body;
 	if (!readableStream) {
