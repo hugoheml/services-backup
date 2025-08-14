@@ -21,13 +21,13 @@ export class MysqlBackupService extends BackupService {
 	async getElementsToBackup(): Promise<BackupFileMetadata[]> {
 		const databases = await this.mysqlConnection.listDatabases();
 
-		const currentDate = new Date();
-		const currentDateString = currentDate.toISOString().replace(/:/g, '-').split('.')[0].replace('T', '-');
-
 		const result: BackupFileMetadata[] = [];
 
 		for await (const db of databases) {
 			if (DATABASES_TO_IGNORE.includes(db)) continue;
+
+			const currentDate = new Date();
+			const currentDateString = currentDate.toISOString().replace(/:/g, '-').split('.')[0].replace('T', '-');
 
 			const dumpPath = await DumpDatabase(db);
 
