@@ -1,7 +1,6 @@
-import { Client, FileInfo } from "basic-ftp";
+import { Client } from "basic-ftp";
 import { StorageClass } from "../StorageClass";
 import { logger } from "../../log";
-import { FileResult } from "../types/FileResult";
 
 const { FTP_HOST, FTP_PORT, FTP_USER, FTP_PASSWORD } = process.env;
 
@@ -25,6 +24,8 @@ export class FTPStorage extends StorageClass {
 	}
 
 	async deleteFile(filePath: string) {
+		await this.client.cd('/');
+
 		try {
 			await this.client.remove(filePath);
 			logger.debug(`Deleted file: ${filePath}`);
@@ -35,6 +36,8 @@ export class FTPStorage extends StorageClass {
 	}
 
 	async uploadFile(filePath: string, destination: string) {
+		await this.client.cd('/');
+		
 		try {
 			await this.client.uploadFrom(filePath, destination);
 			logger.debug(`Uploaded file: ${filePath}, to: ${destination}`);
@@ -45,6 +48,8 @@ export class FTPStorage extends StorageClass {
 	}
 
 	async createFolder(folderPath: string) {
+		await this.client.cd('/');
+
 		try {
 			await this.client.ensureDir(folderPath);
 			logger.debug(`Created folder: ${folderPath}`);
@@ -55,6 +60,8 @@ export class FTPStorage extends StorageClass {
 	}
 
 	async deleteFolder(folderPath: string) {
+		await this.client.cd('/');
+		
 		try {
 			await this.client.removeDir(folderPath);
 			logger.debug(`Deleted folder: ${folderPath}`);
@@ -65,6 +72,8 @@ export class FTPStorage extends StorageClass {
 	}
 
 	async folderExists(folderPath: string): Promise<boolean> {
+		await this.client.cd('/');
+
 		try {
 			const list = await this.client.list(folderPath);
 			return list.some(file => file.name === folderPath && file.isDirectory);
@@ -82,6 +91,8 @@ export class FTPStorage extends StorageClass {
 	}
 
 	async listFiles(folderPath: string) {
+		await this.client.cd('/');
+
 		try {
 			const list = await this.client.list(folderPath);
 
