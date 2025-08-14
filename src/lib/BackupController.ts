@@ -166,12 +166,17 @@ export class BackupController {
 
 				const destinationPath = `${backupMetadata.destinationFolder}/${backupMetadata.fileName}`;
 
-				logger.info(`Downloading backup ${backupMetadata.fileName} (${backupMetadata.uuid}) for ${backupMetadata.parentElement}...`);
+				logger.info(`Downloading backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}...`);
 				const backupFilePath = await this.backupService.downloadBackup(backupMetadata);
+				logger.info(`Downloaded backup file ${backupFilePath} (${backupMetadata.uuid}) to ${backupFilePath}`);
+				if (!backupFilePath) {
+					logger.error(`Failed to download backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}`);
+					continue;
+				}
 
 				logger.info(`Uploading backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}...`);
 				await this.storageClass.uploadFile(backupFilePath, destinationPath);
-				logger.info(`Uploaded backup file ${backupMetadata.fileName} (${backupMetadata.uuid}) to ${destinationPath}`);
+				logger.info(`Uploaded backup file ${backupFilePath} (${backupMetadata.uuid}) to ${destinationPath}`);
 
 				unlinkSync(backupFilePath);
 

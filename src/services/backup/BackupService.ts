@@ -6,5 +6,7 @@ export abstract class BackupService {
 
 	abstract init(): Promise<void>;
 	abstract getElementsToBackup(): Promise<BackupFileMetadata[]>;
-	abstract downloadBackup(backupMetadata: BackupFileMetadata): Promise<string>;
+	downloadBackup(backupMetadata: BackupFileMetadata): Promise<string | undefined> {
+		return Promise.resolve(backupMetadata.localPath);
+	}
 }
