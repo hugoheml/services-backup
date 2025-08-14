@@ -1,4 +1,13 @@
 services:
+  services-backup:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./tsconfig.json:/app/tsconfig.json
   ftp:
     image: stilliard/pure-ftpd
     container_name: pureftp_server
