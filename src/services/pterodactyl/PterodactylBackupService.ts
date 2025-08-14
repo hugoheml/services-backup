@@ -12,6 +12,10 @@ export class PterodactylBackupService extends BackupService {
 
 	private serverBackups: ServerWithBackup[] = [];
 
+	async init() {
+		
+	}
+
 	async getElementsToBackup() {
 		const serverBackups = await FetchAllServersBackups();
 		this.serverBackups = serverBackups;

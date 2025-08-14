@@ -12,6 +12,7 @@ async function main() {
 
 	if (BACKUP_PTERODACTYL) {
 		const pterodactylBackupService = new PterodactylBackupService();
+		await pterodactylBackupService.init();
 
 		const backupController = new BackupController(pterodactylBackupService, storageClass);
 		await backupController.process();
