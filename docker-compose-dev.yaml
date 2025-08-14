@@ -1,5 +1,8 @@
 services:
   services-backup:
+    depends_on:
+      - ftp
+      - mysql
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -8,6 +11,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./tsconfig.json:/app/tsconfig.json
+      - ./docker/volumes/tmp:/app/tmp
   ftp:
     image: stilliard/pure-ftpd
     container_name: pureftp_server
@@ -35,4 +39,5 @@ services:
       - MYSQL_PASSWORD=mypassword
     volumes:
       - ./docker/volumes/mysql_data:/var/lib/mysql
-      - ./docker/scripts/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
