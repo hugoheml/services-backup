@@ -14,3 +14,16 @@ services:
       - PASSIVE_PORTS=30000:30009
     volumes:
       - ./docker/volumes/ftp_data:/home/myuser
+  mysql:
+    image: mysql:8.0-bookworm
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=mydatabase
+      - MYSQL_USER=myuser
+      - MYSQL_PASSWORD=mypassword
+    volumes:
+      - ./docker/volumes/mysql_data:/var/lib/mysql
+      - ./docker/scripts/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
