@@ -9,4 +9,7 @@ export abstract class BackupService {
 	downloadBackup(backupMetadata: BackupFileMetadata): Promise<string | undefined> {
 		return Promise.resolve(backupMetadata.localPath);
 	}
+	close(): Promise<void> {
+		return Promise.resolve();
+	}
 }

@@ -44,4 +44,8 @@ export class MysqlBackupService extends BackupService {
 
 		return result;
 	}
+
+	async close() {
+		this.mysqlConnection.close();
+	}
 }

@@ -18,6 +18,8 @@ async function main() {
 
 		const backupController = new BackupController(pterodactylBackupService, storageClass);
 		await backupController.process();
+
+		pterodactylBackupService.close();
 	}
 
 	if (BACKUP_MYSQL) {
@@ -26,6 +28,8 @@ async function main() {
 
 		const backupController = new BackupController(mysqlBackupService, storageClass);
 		await backupController.process();
+
+		mysqlBackupService.close();
 	}
 
 	await storageClass.close();

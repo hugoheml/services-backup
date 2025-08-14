@@ -118,4 +118,8 @@ export class MysqlConnection {
 		const rows = await this.query<{ Database: string }[]>(`SHOW DATABASES;`);
 		return rows.map((row) => row.Database);
 	}
+
+	async close() {
+		await this.connection.end();
+	}
 }
