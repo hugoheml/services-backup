@@ -5,6 +5,8 @@ import { logger } from "../services/log";
 import { StorageClass } from "../services/storage/StorageClass";
 import { FileResult } from "../services/storage/types/FileResult";
 import { ConvertToNumber } from "../utils/ConvertToNumber";
+import { AlertManager } from "../services/alerts/AlertManager";
+import { AlertLevel } from "../services/alerts/types/AlertLevel";
 
 const MAX_BACKUP_PER_ELEMENT = ConvertToNumber(process.env.MAX_BACKUP_PER_ELEMENT, 3); 
 // const MAX_BACKUP_SIZE_PER_SERVER = 
@@ -13,10 +15,12 @@ const MAX_BACKUP_RETENTION_DAYS = ConvertToNumber(process.env.MAX_BACKUP_RETENTI
 export class BackupController {
 	private backupService: BackupService;
 	private storageClass: StorageClass;
+	private alertManager: AlertManager;
 
-	constructor(backupService: BackupService, storageClass: StorageClass) {
+	constructor(backupService: BackupService, storageClass: StorageClass, alertManager: AlertManager) {
 		this.backupService = backupService;
 		this.storageClass = storageClass;
+		this.alertManager = alertManager;
 	}
 
 	async removeOldBackups(folderFiles: FileResult[]) {
@@ -60,7 +64,7 @@ export class BackupController {
 		const promises = filesToDelete.map(file => {
 			return this.storageClass.deleteFile(file.filePath)
 				.then(() => logger.info(`Deleted old backup file: ${file.filePath}`))
-				.catch(err => logger.error(`Failed to delete old backup file ${file.filePath}:`, err));
+				.catch(err => logger.error(`Failed to delete old backup file ${file.filePath}: ${err}`));
 		});
 		
 		await Promise.all(promises);
@@ -69,30 +73,46 @@ export class BackupController {
 	}
 
 	async doRestrictionsCheck() {
-		const mainFolderExists = await this.storageClass.folderExists(this.backupService.FOLDER_PATH);
-		if (!mainFolderExists) {
-			await this.storageClass.createFolder(this.backupService.FOLDER_PATH);
-		}
-
-		const folders = (await this.storageClass.listFiles(this.backupService.FOLDER_PATH))
-			.filter(file => file.isDirectory)
-
-		logger.info(`Checking for backups to delete due to retention policy...`);
-		for await (const folder of folders) {
-			const folderFiles = await this.storageClass.listFiles(folder.filePath);
-			if (folderFiles.length === 0) {
-				await this.storageClass.deleteFolder(folder.filePath);
-				logger.info(`Deleted empty backup folder: ${folder.filePath}`);
-				continue;
+		try {
+			const mainFolderExists = await this.storageClass.folderExists(this.backupService.FOLDER_PATH);
+			if (!mainFolderExists) {
+				await this.storageClass.createFolder(this.backupService.FOLDER_PATH);
 			}
-
-			const deletedFolders = await this.removeOldBackups(folderFiles);
-			if (deletedFolders.length > 0) {
-				logger.info(`Removed ${deletedFolders.length} old backups from folder: ${folder.filePath}`);
+	
+			const folders = (await this.storageClass.listFiles(this.backupService.FOLDER_PATH))
+				.filter(file => file.isDirectory)
+	
+			logger.info(`Checking for backups to delete due to retention policy...`);
+			for await (const folder of folders) {
+				const folderFiles = await this.storageClass.listFiles(folder.filePath);
+				if (folderFiles.length === 0) {
+					await this.storageClass.deleteFolder(folder.filePath);
+					logger.info(`Deleted empty backup folder: ${folder.filePath}`);
+					continue;
+				}
+	
+				const deletedFolders = await this.removeOldBackups(folderFiles);
+				if (deletedFolders.length > 0) {
+					logger.info(`Removed ${deletedFolders.length} old backups from folder: ${folder.filePath}`);
+				}
+	
+				const actualFolderFiles = await this.storageClass.listFiles(folder.filePath);
+				await this.removeBackupsIfExceedsLimit(actualFolderFiles);
 			}
-
-			const actualFolderFiles = await this.storageClass.listFiles(folder.filePath);
-			await this.removeBackupsIfExceedsLimit(actualFolderFiles);
+		} catch (error) {
+			logger.error(`Error occurred during backup restrictions check for ${this.backupService.SERVICE_NAME}: ${error}`);
+			await this.alertManager.sendAlert({
+				level: AlertLevel.ERROR,
+				message: `Error occurred during backup restrictions check`,
+				fields: [
+					{
+						name: `Affected service`,
+						value: this.backupService.SERVICE_NAME
+					}
+				],
+				error: error
+			});
+			throw error;
 		}
 	}
 
@@ -126,67 +146,95 @@ export class BackupController {
 	}
 
 	async process() {
-		logger.info(`Starting backup process for service: ${this.backupService.SERVICE_NAME}`);
+		try {
+			logger.info(`Starting backup process for service: ${this.backupService.SERVICE_NAME}`);
 		
-		await this.doRestrictionsCheck();
-		
-		const backups = await this.backupService.getElementsToBackup();
-		if (backups.length === 0) {
-			logger.info("No backups to process.");
-			return;
-		}
+			await this.doRestrictionsCheck();
 
-		const backupsToProcess = await this.getTrimmedBackups(backups);
-
-		for await (const backupMetadata of backupsToProcess) {
+			let backups: BackupFileMetadata[];
 			try {
-				const targetFolderExists = await this.storageClass.folderExists(backupMetadata.destinationFolder);
-				if (!targetFolderExists) {
-					await this.storageClass.createFolder(backupMetadata.destinationFolder);
+				backups = await this.backupService.getElementsToBackup();
+				if (backups.length === 0) {
+					logger.info("No backups to process.");
+					return;
 				}
-
-				const targetFolderFiles = await this.storageClass.listFiles(backupMetadata.destinationFolder);
-
-				const backupAlreadyExists = targetFolderFiles.some(file => file.filePath.split('/').pop() === backupMetadata.fileName);
-				if (backupAlreadyExists) {
-					logger.info(`Backup file ${backupMetadata.fileName} (${backupMetadata.uuid}) already exists for ${backupMetadata.parentElement}, skipping download.`);
-					continue;
-				}
-				
-				if (targetFolderFiles.length >= MAX_BACKUP_PER_ELEMENT) {
-					logger.warn(`Maximum backup limit reached for ${backupMetadata.parentElement}, needing to delete the oldest backup.`);
-
-					const sortedTargetFiles = targetFolderFiles.sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime());
-					for (let i = 0; i < sortedTargetFiles.length - MAX_BACKUP_PER_ELEMENT + 1; i++) {
-						const fileToDelete = sortedTargetFiles[i];
-						await this.storageClass.deleteFile(fileToDelete.filePath);
-						logger.info(`Deleted old backup file: ${fileToDelete.filePath}`);
-					}
-				}
-
-				const destinationPath = `${backupMetadata.destinationFolder}/${backupMetadata.fileName}`;
-
-				logger.info(`Downloading backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}...`);
-				const backupFilePath = await this.backupService.downloadBackup(backupMetadata);
-				logger.info(`Downloaded backup file ${backupFilePath} (${backupMetadata.uuid}) to ${backupFilePath}`);
-				if (!backupFilePath) {
-					logger.error(`Failed to download backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}`);
-					continue;
-				}
-
-				logger.info(`Uploading backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}...`);
-				await this.storageClass.uploadFile(backupFilePath, destinationPath);
-				logger.info(`Uploaded backup file ${backupFilePath} (${backupMetadata.uuid}) to ${destinationPath}`);
-
-				unlinkSync(backupFilePath);
-
 			} catch (error) {
-				logger.error(`Error processing backup ${backupMetadata.uuid}: ${error.message}`);
-				continue;
+				logger.error(`Failed to retrieve backups for service: ${this.backupService.SERVICE_NAME}: ${error}`);
+				await this.alertManager.sendAlert({
+					level: AlertLevel.ERROR,
+					message: `Failed to retrieve backups`,
+					fields: [
+						{ name: `Affected service`, value: this.backupService.SERVICE_NAME },
+						{ name: `Error`, value: String(error) }
+					]
+				});
+				return;
 			}
-		}
 
-		logger.info(`Backup for service ${this.backupService.SERVICE_NAME} completed successfully.`);
-		logger.info(`Total backups processed: ${backupsToProcess.length}`);
+			const backupsToProcess = await this.getTrimmedBackups(backups);
+
+			for await (const backupMetadata of backupsToProcess) {
+				try {
+					const targetFolderExists = await this.storageClass.folderExists(backupMetadata.destinationFolder);
+					if (!targetFolderExists) {
+						await this.storageClass.createFolder(backupMetadata.destinationFolder);
+					}
+
+					const targetFolderFiles = await this.storageClass.listFiles(backupMetadata.destinationFolder);
+
+					const backupAlreadyExists = targetFolderFiles.some(file => file.filePath.split('/').pop() === backupMetadata.fileName);
+					if (backupAlreadyExists) {
+						logger.info(`Backup file ${backupMetadata.fileName} (${backupMetadata.uuid}) already exists for ${backupMetadata.parentElement}, skipping download.`);
+						continue;
+					}
+					
+					if (targetFolderFiles.length >= MAX_BACKUP_PER_ELEMENT) {
+						logger.warn(`Maximum backup limit reached for ${backupMetadata.parentElement}, needing to delete the oldest backup.`);
+
+						const sortedTargetFiles = targetFolderFiles.sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime());
+						for (let i = 0; i < sortedTargetFiles.length - MAX_BACKUP_PER_ELEMENT + 1; i++) {
+							const fileToDelete = sortedTargetFiles[i];
+							await this.storageClass.deleteFile(fileToDelete.filePath);
+							logger.info(`Deleted old backup file: ${fileToDelete.filePath}`);
+						}
+					}
+
+					const destinationPath = `${backupMetadata.destinationFolder}/${backupMetadata.fileName}`;
+
+					logger.info(`Downloading backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}...`);
+					const backupFilePath = await this.backupService.downloadBackup(backupMetadata);
+					logger.info(`Downloaded backup file ${backupFilePath} (${backupMetadata.uuid}) to ${backupFilePath}`);
+					if (!backupFilePath) {
+						logger.error(`Failed to download backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}`);
+						continue;
+					}
+
+					logger.info(`Uploading backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}...`);
+					await this.storageClass.uploadFile(backupFilePath, destinationPath);
+					logger.info(`Uploaded backup file ${backupFilePath} (${backupMetadata.uuid}) to ${destinationPath}`);
+
+					unlinkSync(backupFilePath);
+
+				} catch (error) {
+					logger.error(`Error processing backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}: ${error}`);
+					await this.alertManager.sendAlert({
+						level: AlertLevel.ERROR,
+						message: `Error processing backup`,
+						fields: [
+							{ name: "Affected service", value: this.backupService.SERVICE_NAME },
+							{ name: "Element", value: backupMetadata.parentElement },
+							{ name: "Backup UUID", value: backupMetadata.uuid }
+						],
+						error: error
+					});
+					continue;
+				}
+			}
+
+			logger.info(`Backup for service ${this.backupService.SERVICE_NAME} completed successfully.`);
+			logger.info(`Total backups processed: ${backupsToProcess.length}`);
+		} catch (error) {
+			logger.error(`Error during backup process for service ${this.backupService.SERVICE_NAME}: ${error}`);
+		}
 	}
 }

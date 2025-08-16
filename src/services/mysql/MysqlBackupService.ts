@@ -46,6 +46,7 @@ export class MysqlBackupService extends BackupService {
 	}
 
 	async close() {
+		console.log("prout");
 		this.mysqlConnection.close();
 	}
 }

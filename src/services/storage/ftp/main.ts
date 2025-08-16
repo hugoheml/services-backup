@@ -20,7 +20,7 @@ export class FTPStorage extends StorageClass {
 			password: FTP_PASSWORD,
 		});
 
-		logger.info("Connected to FTP server:", FTP_HOST);
+		logger.info(`Connected to FTP server: ${FTP_HOST}`);
 	}
 
 	async deleteFile(filePath: string) {
@@ -30,7 +30,7 @@ export class FTPStorage extends StorageClass {
 			await this.client.remove(filePath);
 			logger.debug(`Deleted file: ${filePath}`);
 		} catch (error) {
-			logger.error(`Failed to delete file ${filePath}:`, error);
+			logger.error(`Failed to delete file ${filePath}: ${error}`);
 			throw error;
 		}
 	}
@@ -42,7 +42,7 @@ export class FTPStorage extends StorageClass {
 			await this.client.uploadFrom(filePath, destination);
 			logger.debug(`Uploaded file: ${filePath}, to: ${destination}`);
 		} catch (error) {
-			logger.error(`Failed to upload file ${filePath} to ${destination}:`, error);
+			logger.error(`Failed to upload file ${filePath} to ${destination}: ${error}`);
 			throw error;
 		}
 	}
@@ -54,7 +54,7 @@ export class FTPStorage extends StorageClass {
 			await this.client.ensureDir(folderPath);
 			logger.debug(`Created folder: ${folderPath}`);
 		} catch (error) {
-			logger.error(`Failed to create folder ${folderPath}:`, error);
+			logger.error(`Failed to create folder ${folderPath}: ${error}`);
 			throw error;
 		}
 	}
@@ -66,7 +66,7 @@ export class FTPStorage extends StorageClass {
 			await this.client.removeDir(folderPath);
 			logger.debug(`Deleted folder: ${folderPath}`);
 		} catch (error) {
-			logger.error(`Failed to delete folder ${folderPath}:`, error);
+			logger.error(`Failed to delete folder ${folderPath}: ${error}`);
 			throw error;
 		}
 	}
@@ -108,7 +108,7 @@ export class FTPStorage extends StorageClass {
 			}
 			return result;
 		} catch (error) {
-			logger.error(`Failed to list files in folder ${folderPath}:`, error);
+			logger.error(`Failed to list files in folder ${folderPath}: ${error}`);
 			throw error;
 		}
 	}
