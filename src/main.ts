@@ -12,6 +12,7 @@ import { AlertLevel } from "./services/alerts/types/AlertLevel";
 
 const BACKUP_PTERODACTYL = process.env.BACKUP_PTERODACTYL === "true";
 const BACKUP_MYSQL = process.env.BACKUP_MYSQL === "true";
+const ALERT_AFTER_PROCESS = process.env.ALERT_AFTER_PROCESS === "true";
 
 async function processBackup(backupService: BackupService, storageClass: StorageClass, alertManager: AlertManager) {
 	try {
@@ -30,6 +31,16 @@ async function processBackup(backupService: BackupService, storageClass: Storage
 
 	const backupController = new BackupController(backupService, storageClass, alertManager);
 	await backupController.process();
+
+	if (ALERT_AFTER_PROCESS) {
+		await alertManager.sendAlert({
+			level: AlertLevel.INFO,
+			message: `Backup script has been executed`,
+			fields: [
+				{ name: `Affected service`, value: backupService.constructor.name }
+			]
+		});
+	}
 
 	backupService.close();
 }

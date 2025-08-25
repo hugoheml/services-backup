@@ -120,6 +120,7 @@ Here is the list of environment variables you can configure:
 | Variable                          | Description                                                      | Default   |
 | --------------------------------- | ---------------------------------------------------------------- | --------- |
 | `ALERT_SERVICE_ENABLED`           | Enable alert notifications (`true` or `false`).                  | `false`   |
+| `ALERT_AFTER_PROCESS`             | Send alerts after each backup process (`true` or `false`).       | `false`   |
 | `ALERT_DISCORD_ENABLED`           | Enable Discord alerts (`true` or `false`).                       | `false`   |
 | `DISCORD_ALERT_WEBHOOK_URL`       | Discord webhook URL for sending alert notifications.             | _(empty)_ |
 | `DISCORD_ALERT_EVERYONE_ON_ERROR` | Mention everyone in Discord on error alerts (`true` or `false`). | `false`   |
