@@ -74,54 +74,55 @@ Here is the list of environment variables you can configure:
 
 ### General Settings
 
-| Variable                     | Description                                                   | Default                                           |
-| ---------------------------- | ------------------------------------------------------------- | ------------------------------------------------- |
-| `LOG_LEVEL`                  | Log level (error, warn, info, http, verbose, debug, silly).   | `info`                                            |
-| `TMP_DIR`                    | Temporary directory to store backups before uploading.        | `/tmp`                                            |
-| `MAX_BACKUP_PER_ELEMENT`     | Maximum number of backups to keep per server/database.        | `5`                                               |
-| `MAX_BACKUP_RETENTION_DAYS`  | Maximum retention duration in days for backups.               | `30`                                              |
+| Variable                    | Description                                                 | Default |
+| --------------------------- | ----------------------------------------------------------- | ------- |
+| `LOG_LEVEL`                 | Log level (error, warn, info, http, verbose, debug, silly). | `info`  |
+| `TMP_DIR`                   | Temporary directory to store backups before uploading.      | `/tmp`  |
+| `MAX_BACKUP_PER_ELEMENT`    | Maximum number of backups to keep per server/database.      | `5`     |
+| `MAX_BACKUP_RETENTION_DAYS` | Maximum retention duration in days for backups.             | `30`    |
 
 ### Pterodactyl Settings
 
-| Variable                     | Description                                                   | Default                                           |
-| ---------------------------- | ------------------------------------------------------------- | ------------------------------------------------- |
-| `BACKUP_PTERODACTYL`         | Enable backup for Pterodactyl (`true` or `false`).            | `true`                                            |
-| `PTERODACTYL_URL`            | The URL of your Pterodactyl panel.                            | `https://panel.example.com`                       |
-| `PTERODACTYL_API_KEY`        | Your Pterodactyl client API key.                              | `ptlc_XXXXXX`                                     |
-| `PTERODACTYL_FETCH_AS_ADMIN` | Fetch servers as an administrator (`true` or `false`).        | `true`                                            |
-| `PTERODACTYL_FOLDER_PATH`    | Base path to store Pterodactyl backups on the remote storage. | `pterodactyl/servers`                             |
+| Variable                     | Description                                                   | Default                     |
+| ---------------------------- | ------------------------------------------------------------- | --------------------------- |
+| `BACKUP_PTERODACTYL`         | Enable backup for Pterodactyl (`true` or `false`).            | `true`                      |
+| `PTERODACTYL_URL`            | The URL of your Pterodactyl panel.                            | `https://panel.example.com` |
+| `PTERODACTYL_API_KEY`        | Your Pterodactyl client API key.                              | `ptlc_XXXXXX`               |
+| `PTERODACTYL_FETCH_AS_ADMIN` | Fetch servers as an administrator (`true` or `false`).        | `true`                      |
+| `PTERODACTYL_FOLDER_PATH`    | Base path to store Pterodactyl backups on the remote storage. | `pterodactyl/servers`       |
 
 ### MySQL/MariaDB Settings
 
-| Variable                     | Description                                                   | Default                                           |
-| ---------------------------- | ------------------------------------------------------------- | ------------------------------------------------- |
-| `BACKUP_MYSQL`               | Enable backup for MySQL/MariaDB (`true` or `false`).          | `true`                                            |
-| `MYSQL_HOST`                 | Your MySQL/MariaDB server host.                               | `localhost`                                       |
-| `MYSQL_PORT`                 | Your MySQL/MariaDB server port.                               | `3306`                                            |
-| `MYSQL_USER`                 | The username for the MySQL/MariaDB connection.                | `myuser`                                          |
-| `MYSQL_PASSWORD`             | The password for the MySQL/MariaDB connection.                | `mypassword`                                      |
-| `MYSQL_POOL_SIZE`            | Connection pool size for MySQL/MariaDB.                       | `5`                                               |
-| `MYSQL_IGNORE_DATABASES`     | Comma-separated list of databases to ignore during backup.    | `information_schema,performance_schema,mysql,sys` |
-| `MYSQL_FOLDER_PATH`          | Base path to store MySQL backups on the remote storage.       | `mysql`                                           |
-| `MYSQL_SSL_ENABLED`          | Enable SSL for MySQL connection (`true` or `false`).          | `false`                                           |
+| Variable                 | Description                                                | Default                                           |
+| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------- |
+| `BACKUP_MYSQL`           | Enable backup for MySQL/MariaDB (`true` or `false`).       | `true`                                            |
+| `MYSQL_HOST`             | Your MySQL/MariaDB server host.                            | `localhost`                                       |
+| `MYSQL_PORT`             | Your MySQL/MariaDB server port.                            | `3306`                                            |
+| `MYSQL_USER`             | The username for the MySQL/MariaDB connection.             | `myuser`                                          |
+| `MYSQL_PASSWORD`         | The password for the MySQL/MariaDB connection.             | `mypassword`                                      |
+| `MYSQL_POOL_SIZE`        | Connection pool size for MySQL/MariaDB.                    | `5`                                               |
+| `MYSQL_IGNORE_DATABASES` | Comma-separated list of databases to ignore during backup. | `information_schema,performance_schema,mysql,sys` |
+| `MYSQL_FOLDER_PATH`      | Base path to store MySQL backups on the remote storage.    | `mysql`                                           |
+| `MYSQL_SSL_ENABLED`      | Enable SSL for MySQL connection (`true` or `false`).       | `false`                                           |
 
 ### Storage Settings
 
-| Variable                     | Description                                                   | Default                                           |
-| ---------------------------- | ------------------------------------------------------------- | ------------------------------------------------- |
-| `STORAGE_TYPE`               | The storage type to use. Currently, only `ftp` is supported.  | `ftp`                                             |
-| `FTP_HOST`                   | Your FTP server host.                                         | `localhost`                                       |
-| `FTP_PORT`                   | Your FTP server port.                                         | `21`                                              |
-| `FTP_USER`                   | The username for the FTP connection.                          | `myuser`                                          |
-| `FTP_PASSWORD`               | The password for the FTP connection.                          | `mypassword`                                      |
+| Variable       | Description                                                  | Default      |
+| -------------- | ------------------------------------------------------------ | ------------ |
+| `STORAGE_TYPE` | The storage type to use. Currently, only `ftp` is supported. | `ftp`        |
+| `FTP_HOST`     | Your FTP server host.                                        | `localhost`  |
+| `FTP_PORT`     | Your FTP server port.                                        | `21`         |
+| `FTP_USER`     | The username for the FTP connection.                         | `myuser`     |
+| `FTP_PASSWORD` | The password for the FTP connection.                         | `mypassword` |
 
 ### Alert Settings
 
-| Variable                     | Description                                                   | Default                                           |
-| ---------------------------- | ------------------------------------------------------------- | ------------------------------------------------- |
-| `ALERT_SERVICE_ENABLED`      | Enable alert notifications (`true` or `false`).               | `false`                                           |
-| `ALERT_DISCORD_ENABLED`      | Enable Discord alerts (`true` or `false`).                    | `false`                                           |
-| `DISCORD_ALERT_WEBHOOK_URL`  | Discord webhook URL for sending alert notifications.          | _(empty)_                                         |
+| Variable                          | Description                                                      | Default   |
+| --------------------------------- | ---------------------------------------------------------------- | --------- |
+| `ALERT_SERVICE_ENABLED`           | Enable alert notifications (`true` or `false`).                  | `false`   |
+| `ALERT_DISCORD_ENABLED`           | Enable Discord alerts (`true` or `false`).                       | `false`   |
+| `DISCORD_ALERT_WEBHOOK_URL`       | Discord webhook URL for sending alert notifications.             | _(empty)_ |
+| `DISCORD_ALERT_EVERYONE_ON_ERROR` | Mention everyone in Discord on error alerts (`true` or `false`). | `false`   |
 
 ## Roadmap
 

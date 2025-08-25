@@ -5,7 +5,9 @@ import { AlertLevel } from "../../types/AlertLevel";
 import { GetLevelColor } from "./utils";
 import { logger } from "../../../log";
 
-const { DISCORD_ALERT_WEBHOOK_URL } = process.env;
+const { DISCORD_ALERT_WEBHOOK_URL, DISCORD_ALERT_EVERYONE_ON_ERROR } = process.env;
+
+const EVERYONE_ON_ERROR_ENABLED = DISCORD_ALERT_EVERYONE_ON_ERROR === "true";
 
 export class DiscordAlertService extends AlertService {
 	
@@ -16,12 +18,15 @@ export class DiscordAlertService extends AlertService {
 	}
 	
 	async sendAlert(alert: Alert) {
+		const shouldEveryone = alert.level === AlertLevel.ERROR && EVERYONE_ON_ERROR_ENABLED;
+
 		const response = await fetch(DISCORD_ALERT_WEBHOOK_URL, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
+				content: shouldEveryone ? "@everyone" : undefined,
 				embeds: [
 					{
 						title: "Alert",
