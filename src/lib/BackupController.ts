@@ -7,6 +7,7 @@ import { FileResult } from "../services/storage/types/FileResult";
 import { ConvertToNumber } from "../utils/ConvertToNumber";
 import { AlertManager } from "../services/alerts/AlertManager";
 import { AlertLevel } from "../services/alerts/types/AlertLevel";
+import { GetBackupsPerDestinationFolder } from "../services/backup/utils";
 
 const MAX_BACKUP_PER_ELEMENT = ConvertToNumber(process.env.MAX_BACKUP_PER_ELEMENT, 3); 
 // const MAX_BACKUP_SIZE_PER_SERVER = 
@@ -118,13 +119,7 @@ export class BackupController {
 
 	async getTrimmedBackups(backupsToProcess: BackupFileMetadata[]) {
 		// Get only the last MAX_BACKUP_PER_ELEMENT backups per .destinationFolder
-		const backupFolders = new Map<string, BackupFileMetadata[]>();
-		for (const backup of backupsToProcess) {
-			if (!backupFolders.has(backup.destinationFolder)) {
-				backupFolders.set(backup.destinationFolder, []);
-			}
-			backupFolders.get(backup.destinationFolder)?.push(backup);
-		}
+		const backupFolders = GetBackupsPerDestinationFolder(backupsToProcess);
 
 		for (const [folder, backups] of backupFolders.entries()) {
 			if (backups.length > MAX_BACKUP_PER_ELEMENT) {
