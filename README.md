@@ -74,12 +74,60 @@ Here is the list of environment variables you can configure:
 
 ### General Settings
 
-| Variable                    | Description                                                 | Default |
-| --------------------------- | ----------------------------------------------------------- | ------- |
-| `LOG_LEVEL`                 | Log level (error, warn, info, http, verbose, debug, silly). | `info`  |
-| `TMP_DIR`                   | Temporary directory to store backups before uploading.      | `/tmp`  |
-| `MAX_BACKUP_PER_ELEMENT`    | Maximum number of backups to keep per server/database.      | `5`     |
-| `MAX_BACKUP_RETENTION_DAYS` | Maximum retention duration in days for backups.             | `30`    |
+| Variable                            | Description                                                                                                             | Default   |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------- |
+| `LOG_LEVEL`                         | Log level (error, warn, info, http, verbose, debug, silly).                                                             | `info`    |
+| `TMP_DIR`                           | Temporary directory to store backups before uploading.                                                                  | `/tmp`    |
+| `MAX_BACKUP_PER_ELEMENT`            | Maximum number of backups to keep per server/database.                                                                  | `5`       |
+| `MAX_BACKUP_RETENTION_DAYS`         | Maximum retention duration in days for backups.                                                                         | `30`      |
+| `PERIODIC_BACKUP_RETENTION_ENABLED` | Enable periodic backup retention to keep specific backups at defined intervals (`true` or `false`).                     | `false`   |
+| `PERIODIC_BACKUP_RETENTION`         | Comma-separated list of time intervals (in minutes) and amounts to keep. Format: `interval1:amount1,interval2:amount2`. | _(empty)_ |
+
+#### Periodic Backup Retention Examples
+
+The `PERIODIC_BACKUP_RETENTION` setting allows you to define custom retention policies to keep specific backups at defined time intervals, even if they exceed the normal retention limits.
+
+**Format:** `interval_in_minutes:amount_to_keep`
+
+**Examples:**
+
+- **Keep 1 backup every hour for the last 4 hours:**
+  ```
+  PERIODIC_BACKUP_RETENTION=60:4
+  ```
+
+- **Keep 1 backup every day for the last 7 days:**
+  ```
+  PERIODIC_BACKUP_RETENTION=1440:7
+  ```
+
+- **Keep 1 backup every week for the last 4 weeks:**
+  ```
+  PERIODIC_BACKUP_RETENTION=10080:4
+  ```
+
+- **Complex retention policy (hourly, daily, weekly, monthly):**
+  ```
+  PERIODIC_BACKUP_RETENTION=60:24,1440:7,10080:4,43800:3
+  ```
+  This example keeps:
+  - 24 backups: one for each of the last 24 hour periods
+  - 7 backups: one for each of the last 7 day periods
+  - 4 backups: one for each of the last 4 week periods
+  - 3 backups: one for each of the last 3 month periods
+
+- **Long-term archival policy:**
+  ```
+  PERIODIC_BACKUP_RETENTION=525600:2,262800:4,43800:6,10080:8,1440:14
+  ```
+  This example keeps:
+  - 2 backups: one for each of the last 2 year periods
+  - 4 backups: one for each of the last 4 six-month periods
+  - 6 backups: one for each of the last 6 month periods
+  - 8 backups: one for each of the last 8 week periods
+  - 14 backups: one for each of the last 14 day periods
+
+**Note:** When `PERIODIC_BACKUP_RETENTION_ENABLED=true`, backups that match these retention criteria will be preserved even if they exceed the `MAX_BACKUP_PER_ELEMENT` or `MAX_BACKUP_RETENTION_DAYS` limits. The system will keep the most recent backup within each time period defined.
 
 ### Pterodactyl Settings
 
@@ -120,7 +168,7 @@ Here is the list of environment variables you can configure:
 | Variable                          | Description                                                      | Default   |
 | --------------------------------- | ---------------------------------------------------------------- | --------- |
 | `ALERT_SERVICE_ENABLED`           | Enable alert notifications (`true` or `false`).                  | `false`   |
-| `ALERT_AFTER_PROCESS`             | Send alerts after each backup process (`true` or `false`).       | `false`   |
+| `ALERT_AFTER_PROCESS`             | Send alerts after each backup process (`true` or `false`).       | `false`   |
 | `ALERT_DISCORD_ENABLED`           | Enable Discord alerts (`true` or `false`).                       | `false`   |
 | `DISCORD_ALERT_WEBHOOK_URL`       | Discord webhook URL for sending alert notifications.             | _(empty)_ |
 | `DISCORD_ALERT_EVERYONE_ON_ERROR` | Mention everyone in Discord on error alerts (`true` or `false`). | `false`   |

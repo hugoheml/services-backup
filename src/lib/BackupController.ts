@@ -3,11 +3,12 @@ import { BackupService } from "../services/backup/BackupService";
 import { BackupFileMetadata } from "../services/backup/types/BackupFileMetadata";
 import { logger } from "../services/log";
 import { StorageClass } from "../services/storage/StorageClass";
-import { FileResult } from "../services/storage/types/FileResult";
 import { ConvertToNumber } from "../utils/ConvertToNumber";
 import { AlertManager } from "../services/alerts/AlertManager";
 import { AlertLevel } from "../services/alerts/types/AlertLevel";
 import { GetBackupsPerDestinationFolder } from "../services/backup/utils";
+import { FileFilesToFileFilesWithRetention } from "../services/storage/utils";
+import { FileResultWithRetention } from "../services/storage/types/FileResultWithRetention";
 
 const MAX_BACKUP_PER_ELEMENT = ConvertToNumber(process.env.MAX_BACKUP_PER_ELEMENT, 3); 
 // const MAX_BACKUP_SIZE_PER_SERVER = 
@@ -24,9 +25,13 @@ export class BackupController {
 		this.alertManager = alertManager;
 	}
 
-	async removeOldBackups(folderFiles: FileResult[]) {
+	async removeOldBackups(folderFiles: FileResultWithRetention[]) {
 		const now = new Date();
 		const oldFiles = folderFiles.filter(file => {
+			if (!file.canBeDeleted) {
+				return false;
+			}
+
 			const fileDate = file.lastModified;
 			const diffDays = Math.floor((now.getTime() - fileDate.getTime()) / (1000 * 3600 * 24));
 			return diffDays > MAX_BACKUP_RETENTION_DAYS;
@@ -48,13 +53,15 @@ export class BackupController {
 		return oldFiles;
 	}
 
-	async removeBackupsIfExceedsLimit(folderFiles: FileResult[]) {
-		if (folderFiles.length <= MAX_BACKUP_PER_ELEMENT) {
+	async removeBackupsIfExceedsLimit(folderFiles: FileResultWithRetention[]) {
+		const folderFilesThatCanBeDeleted = folderFiles.filter(f => f.canBeDeleted);
+
+		if (folderFilesThatCanBeDeleted.length <= MAX_BACKUP_PER_ELEMENT) {
 			return;
 		}
 
 		logger.warn(`Maximum backup limit reached for folder ${folderFiles[0].filePath}, needing to delete the oldest backups.`);
-		const sortedFiles = folderFiles.sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime());
+		const sortedFiles = folderFilesThatCanBeDeleted.sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime());
 		const filesToDelete = sortedFiles.slice(MAX_BACKUP_PER_ELEMENT);
 		
 		if (filesToDelete.length === 0) {
@@ -86,7 +93,7 @@ export class BackupController {
 	
 			logger.info(`Checking for backups to delete due to retention policy...`);
 			for await (const folder of folders) {
-				const folderFiles = await this.storageClass.listFiles(folder.filePath);
+				const folderFiles = FileFilesToFileFilesWithRetention(await this.storageClass.listFiles(folder.filePath));
 				if (folderFiles.length === 0) {
 					await this.storageClass.deleteFolder(folder.filePath);
 					logger.info(`Deleted empty backup folder: ${folder.filePath}`);
@@ -98,7 +105,7 @@ export class BackupController {
 					logger.info(`Removed ${deletedFolders.length} old backups from folder: ${folder.filePath}`);
 				}
 	
-				const actualFolderFiles = await this.storageClass.listFiles(folder.filePath);
+				const actualFolderFiles = FileFilesToFileFilesWithRetention(await this.storageClass.listFiles(folder.filePath));
 				await this.removeBackupsIfExceedsLimit(actualFolderFiles);
 			}
 		} catch (error) {
@@ -176,18 +183,20 @@ export class BackupController {
 						await this.storageClass.createFolder(backupMetadata.destinationFolder);
 					}
 
-					const targetFolderFiles = await this.storageClass.listFiles(backupMetadata.destinationFolder);
+					const targetFolderFiles = FileFilesToFileFilesWithRetention(await this.storageClass.listFiles(backupMetadata.destinationFolder));
 
 					const backupAlreadyExists = targetFolderFiles.some(file => file.filePath.split('/').pop() === backupMetadata.fileName);
 					if (backupAlreadyExists) {
 						logger.info(`Backup file ${backupMetadata.fileName} (${backupMetadata.uuid}) already exists for ${backupMetadata.parentElement}, skipping download.`);
 						continue;
 					}
+
+					const filesThatCanBeDeleted = targetFolderFiles.filter(f => f.canBeDeleted); 
 					
-					if (targetFolderFiles.length >= MAX_BACKUP_PER_ELEMENT) {
+					if (filesThatCanBeDeleted.length >= MAX_BACKUP_PER_ELEMENT) {
 						logger.warn(`Maximum backup limit reached for ${backupMetadata.parentElement}, needing to delete the oldest backup.`);
 
-						const sortedTargetFiles = targetFolderFiles.sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime());
+						const sortedTargetFiles = filesThatCanBeDeleted.sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime());
 						for (let i = 0; i < sortedTargetFiles.length - MAX_BACKUP_PER_ELEMENT + 1; i++) {
 							const fileToDelete = sortedTargetFiles[i];
 							await this.storageClass.deleteFile(fileToDelete.filePath);
