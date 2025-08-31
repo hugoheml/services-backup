@@ -42,13 +42,10 @@ export class BackupController {
 			return [];
 		}
 
-		const promises = oldFiles.map(file => {
-			return this.storageClass.deleteFile(file.filePath)
-				.then(() => logger.info(`Deleted old backup file: ${file.filePath}`))
-				.catch(err => logger.error(`Failed to delete old backup file ${file.filePath}:`, err));
-		});
-		
-		await Promise.all(promises);
+		for await (const file of oldFiles) {
+			await this.storageClass.deleteFile(file.filePath);
+			logger.info(`Deleted old backup file: ${file.filePath}`);
+		}
 
 		return oldFiles;
 	}
