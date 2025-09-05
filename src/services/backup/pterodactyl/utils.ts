@@ -5,7 +5,7 @@ import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { ServerListResult } from "./types/ServerListResult";
 import { ServerResult } from "./types/ServerResult";
-import { logger } from "../log";
+import { logger } from "../../log";
 import { BackupListResult } from "./types/BackupListResult";
 import { BackupResult } from "./types/BackupResult";
 import { BackupDownloadResult } from "./types/BackupDownloadResult";

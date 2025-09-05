@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { GetStorageClass } from "./services/storage/main";
 
-import { PterodactylBackupService } from "./services/pterodactyl/PterodactylBackupService";
+import { PterodactylBackupService } from "./services/backup/pterodactyl/PterodactylBackupService";
 import { BackupController } from "./lib/BackupController";
-import { MysqlBackupService } from "./services/mysql/MysqlBackupService";
+import { MysqlBackupService } from "./services/backup/mysql/MysqlBackupService";
 import { AlertManager } from "./services/alerts/AlertManager";
 import { logger } from "./services/log";
 import { BackupService } from "./services/backup/BackupService";

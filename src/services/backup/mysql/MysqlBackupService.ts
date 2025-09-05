@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { BackupService } from "../backup/BackupService";
-import { BackupFileMetadata } from "../backup/types/BackupFileMetadata";
+import { BackupService } from "../../backup/BackupService";
+import { BackupFileMetadata } from "../../backup/types/BackupFileMetadata";
 import { DumpDatabase, MysqlConnection } from "./utils";
 import { statSync } from "node:fs";
 

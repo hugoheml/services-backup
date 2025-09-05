@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { BackupService } from "../backup/BackupService";
-import { BackupFileMetadata } from "../backup/types/BackupFileMetadata";
+import { BackupService } from "../BackupService";
+import { BackupFileMetadata } from "../types/BackupFileMetadata";
 import { ServerWithBackup } from "./types/ServerWithBackup";
 import { DownloadServerBackup, FetchAllServersBackups, GetBackupFileName } from "./utils";
 

@@ -2,7 +2,7 @@ import "dotenv/config";
 import mysql, { Connection, RowDataPacket } from "mysql2/promise";
 import { createWriteStream, mkdirSync } from "node:fs";
 import { spawn } from "node:child_process";
-import { logger } from "../log";
+import { logger } from "../../log";
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_PORT, MYSQL_POOL_SIZE, TMP_DIR, MYSQL_SSL_ENABLED } = process.env;
 
