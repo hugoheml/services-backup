@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { FTPStorage } from "./ftp/main";
+import { LocalStorage } from "./local/main";
 
 const { STORAGE_TYPE } = process.env;
 
@@ -9,6 +10,10 @@ export function GetStorageClass() {
 			return new FTPStorage();
 		}
 
+		case "local": {
+			return new LocalStorage();
+		}
+		
 		default: {
 			throw new Error(`Unsupported storage type: ${STORAGE_TYPE}`);
 		}

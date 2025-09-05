@@ -12,6 +12,7 @@ services:
       - ./src:/app/src
       - ./tsconfig.json:/app/tsconfig.json
       - ./docker/volumes/tmp:/app/tmp
+      - ./docker/volumes/backups:/app/backups
   ftp:
     image: stilliard/pure-ftpd
     container_name: pureftp_server

@@ -18,7 +18,8 @@ services:
       - MYSQL_FOLDER_PATH=mysql
       - MYSQL_SSL_ENABLED=false
 
-      - STORAGE_TYPE=ftp
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_PATH=/backups
       - FTP_HOST=<FTP_HOST>
       - FTP_PORT=<FTP_PORT>
       - FTP_USER=<FTP_USER>
@@ -34,3 +35,6 @@ services:
 
       - ALERT_DISCORD_ENABLED=false
       - DISCORD_WEBHOOK_URL=<DISCORD_WEBHOOK_URL>
+    # For STORAGE_TYPE=local only
+    volumes:
+      - ./backups:/backups

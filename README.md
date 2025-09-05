@@ -13,6 +13,7 @@ Services Backup is a tool designed to automate the backup of various services. C
 
 And the following storage classes:
 
+- **Local Storage**: Store backups directly on the local filesystem.
 - [**FTP**](https://en.wikipedia.org/wiki/File_Transfer_Protocol): A standard network protocol used to transfer files from one host to another over a TCP-based network.
 
 The application also supports alert notifications through:
@@ -155,13 +156,30 @@ The `PERIODIC_BACKUP_RETENTION` setting allows you to define custom retention po
 
 ### Storage Settings
 
-| Variable       | Description                                                  | Default      |
-| -------------- | ------------------------------------------------------------ | ------------ |
-| `STORAGE_TYPE` | The storage type to use. Currently, only `ftp` is supported. | `ftp`        |
-| `FTP_HOST`     | Your FTP server host.                                        | `localhost`  |
-| `FTP_PORT`     | Your FTP server port.                                        | `21`         |
-| `FTP_USER`     | The username for the FTP connection.                         | `myuser`     |
-| `FTP_PASSWORD` | The password for the FTP connection.                         | `mypassword` |
+| Variable             | Description                                         | Default      |
+| -------------------- | --------------------------------------------------- | ------------ |
+| `STORAGE_TYPE`       | The storage type to use. Supported: `ftp`, `local`. | `local`      |
+| `LOCAL_STORAGE_PATH` | Path to store backups when using local storage.     | `backups`    |
+| `FTP_HOST`           | Your FTP server host.                               | `localhost`  |
+| `FTP_PORT`           | Your FTP server port.                               | `21`         |
+| `FTP_USER`           | The username for the FTP connection.                | `myuser`     |
+| `FTP_PASSWORD`       | The password for the FTP connection.                | `mypassword` |
+
+#### Using Local Storage
+You must also set `LOCAL_STORAGE_PATH` to the directory where backups will be stored.
+When using Docker, mount a volume to persist your backups:
+
+```yaml
+services:
+  services-backup:
+    ...
+    environment:
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_PATH=/backups
+    volumes:
+      - ./backups:/backups
+```
+Backups will be saved in the `./backups` directory on the host machine.
 
 ### Alert Settings
 
