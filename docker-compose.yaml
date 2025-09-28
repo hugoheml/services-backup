@@ -1,6 +1,6 @@
 services:
   services-backup:
-    image: ghcr.io/hugoheml/services-backup:v1.0.0-beta.2
+    image: ghcr.io/hugoheml/services-backup:v1.0.0-beta.6
     environment:
       - BACKUP_PTERODACTYL=true
       - PTERODACTYL_URL=<PTERODACTYL_URL>
@@ -42,7 +42,7 @@ services:
       - TMP_DIR=/tmp
 
       - ALERT_SERVICE_ENABLED=false
-      
+
       - ALERT_DISCORD_ENABLED=false
       - DISCORD_WEBHOOK_URL=<DISCORD_WEBHOOK_URL>
     # For STORAGE_TYPE=local only

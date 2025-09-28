@@ -1,6 +1,6 @@
 {
   "name": "services-backup",
-  "version": "1.0.0",
+  "version": "v1.0.0-beta.6",
   "description": "Backup your services in specific file storages systems",
   "main": "dist/main.ts",
   "scripts": {
