@@ -10,6 +10,7 @@ Services Backup is a tool designed to automate the backup of various services. C
 
 - [**Pterodactyl**](https://pterodactyl.io/): A game server management panel.
 - [**MySQL/MariaDB**](https://mysql.com/): Popular relational database management systems.
+- [**PostgreSQL**](https://www.postgresql.org/): A powerful open-source relational database.
 
 And the following storage classes:
 
@@ -37,7 +38,7 @@ docker-compose up -d --build
 To set up a local development environment, you can use the development docker-compose file which includes local FTP and MySQL servers for testing. The entire development environment can be deployed directly from the docker-compose:
 
 1.  Create a `.env` file based on [`.env.example`](.env.example) and fill in your configuration. For the local development environment, the default values should work.
-2.  Start the entire development environment (including local FTP and MySQL servers):
+2.  Start the entire development environment (including local FTP, MySQL, and PostgreSQL servers):
     ```bash
     docker-compose -f docker-compose-dev.yaml up -d --build
     ```
@@ -45,13 +46,14 @@ To set up a local development environment, you can use the development docker-co
 This will start:
 - A local FTP server for testing storage functionality
 - A local MySQL server with sample databases for testing backup functionality
+- A local PostgreSQL server with sample databases for testing backup functionality
 - The application in development mode with hot-reloading
 
 Alternatively, if you prefer to run the application locally while using containerized services:
 
 1.  Start only the local services:
     ```bash
-    docker-compose -f docker-compose-dev.yaml up -d --build ftp mysql
+  docker-compose -f docker-compose-dev.yaml up -d --build ftp mysql postgres
     ```
 2.  Install the project dependencies:
     ```bash
@@ -64,8 +66,9 @@ Alternatively, if you prefer to run the application locally while using containe
 
 ## Requirements
 
-For MySQL/MariaDB backup functionality in non-Docker deployments, the system requires:
+For MySQL/MariaDB and PostgreSQL backup functionality in non-Docker deployments, the system requires:
 - `mysqldump` utility (usually included with MySQL/MariaDB client packages)
+- `pg_dump` utility (usually included with PostgreSQL client packages)
 
 *Note: Docker deployments already include this dependency in the container.*
 
@@ -153,6 +156,21 @@ The `PERIODIC_BACKUP_RETENTION` setting allows you to define custom retention po
 | `MYSQL_IGNORE_DATABASES` | Comma-separated list of databases to ignore during backup. | `information_schema,performance_schema,mysql,sys` |
 | `MYSQL_FOLDER_PATH`      | Base path to store MySQL backups on the remote storage.    | `mysql`                                           |
 | `MYSQL_SSL_ENABLED`      | Enable SSL for MySQL connection (`true` or `false`).       | `false`                                           |
+
+### PostgreSQL Settings
+
+| Variable                           | Description                                                    | Default                            |
+| ---------------------------------- | -------------------------------------------------------------- | ---------------------------------- |
+| `BACKUP_POSTGRESQL`                | Enable backup for PostgreSQL (`true` or `false`).              | `false`                            |
+| `POSTGRES_HOST`                    | Your PostgreSQL server host.                                   | `localhost`                        |
+| `POSTGRES_PORT`                    | Your PostgreSQL server port.                                   | `5432`                             |
+| `POSTGRES_USER`                    | The username for the PostgreSQL connection.                    | `myuser`                           |
+| `POSTGRES_PASSWORD`                | The password for the PostgreSQL connection.                    | `mypassword`                       |
+| `POSTGRES_DB`                      | Default database used for the initial connection.              | `postgres`                         |
+| `POSTGRES_IGNORE_DATABASES`        | Comma-separated list of databases to ignore during backup.     | `template0,template1`              |
+| `POSTGRES_FOLDER_PATH`             | Base path to store PostgreSQL backups on the remote storage.   | `postgresql`                       |
+| `POSTGRES_SSL_ENABLED`             | Enable SSL for PostgreSQL connection (`true` or `false`).      | `false`                            |
+| `POSTGRES_SSL_REJECT_UNAUTHORIZED` | Reject self-signed certificates when SSL is enabled (`true`).  | `true`                             |
 
 ### Storage Settings
 

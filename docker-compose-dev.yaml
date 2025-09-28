@@ -3,6 +3,7 @@ services:
     depends_on:
       - ftp
       - mysql
+      - postgres
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -42,3 +43,15 @@ services:
       - ./docker/volumes/mysql_data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=mydatabase
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+    volumes:
+      - ./docker/volumes/postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql

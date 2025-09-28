@@ -1,9 +1,10 @@
 FROM node:24-alpine
 
-# Install mysqldump
+# Install database clients needed for backups
 RUN apk add --no-cache \
     mysql-client \
     mariadb-connector-c \
+    postgresql-client \
     tzdata
 
 WORKDIR /app

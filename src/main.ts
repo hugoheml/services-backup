@@ -4,6 +4,7 @@ import { GetStorageClass } from "./services/storage/main";
 import { PterodactylBackupService } from "./services/backup/pterodactyl/PterodactylBackupService";
 import { BackupController } from "./lib/BackupController";
 import { MysqlBackupService } from "./services/backup/mysql/MysqlBackupService";
+import { PostgresqlBackupService } from "./services/backup/postgresql/PostgresqlBackupService";
 import { AlertManager } from "./services/alerts/AlertManager";
 import { logger } from "./services/log";
 import { BackupService } from "./services/backup/BackupService";
@@ -12,6 +13,7 @@ import { AlertLevel } from "./services/alerts/types/AlertLevel";
 
 const BACKUP_PTERODACTYL = process.env.BACKUP_PTERODACTYL === "true";
 const BACKUP_MYSQL = process.env.BACKUP_MYSQL === "true";
+const BACKUP_POSTGRESQL = process.env.BACKUP_POSTGRESQL === "true";
 const ALERT_AFTER_PROCESS = process.env.ALERT_AFTER_PROCESS === "true";
 
 async function processBackup(backupService: BackupService, storageClass: StorageClass, alertManager: AlertManager) {
@@ -76,6 +78,11 @@ async function main() {
 	if (BACKUP_MYSQL) {
 		const mysqlBackupService = new MysqlBackupService();
 		await processBackup(mysqlBackupService, storageClass, alertManager);
+	}
+
+	if (BACKUP_POSTGRESQL) {
+		const postgresqlBackupService = new PostgresqlBackupService();
+		await processBackup(postgresqlBackupService, storageClass, alertManager);
 	}
 
 	await storageClass.close();
