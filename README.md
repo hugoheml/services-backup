@@ -217,4 +217,6 @@ Here are the features planned for future releases:
 - [ ] Add a maximum storage threshold to avoid filling up the storage space.
 - [ ] Add more alert systems for backup failures.
 - [ ] Add support for more services and storage classes.
+- [ ] Add `rsync` command support
+- [ ] Make some tutorials for backuping some services
 - [ ] Rework the files organization (especially in `services/` folder).
