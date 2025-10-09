@@ -144,3 +144,6 @@ tmp/
 # Docker volumes folder
 docker/volumes/*
 !docker/volumes/.gitkeep
+
+# ASC keys for encryption
+*.asc

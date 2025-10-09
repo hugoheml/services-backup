@@ -10,6 +10,8 @@ services:
     env_file:
       - .env
     volumes:
+      - ./public.asc:/app/public.asc
+      - ./private.asc:/app/private.asc
       - ./src:/app/src
       - ./tsconfig.json:/app/tsconfig.json
       - ./docker/volumes/tmp:/app/tmp

@@ -209,6 +209,129 @@ Backups will be saved in the `./backups` directory on the host machine.
 | `DISCORD_ALERT_WEBHOOK_URL`       | Discord webhook URL for sending alert notifications.             | _(empty)_ |
 | `DISCORD_ALERT_EVERYONE_ON_ERROR` | Mention everyone in Discord on error alerts (`true` or `false`). | `false`   |
 
+### Encryption Settings
+
+| Variable                          | Description                                                           | Default             |
+| --------------------------------- | --------------------------------------------------------------------- | ------------------- |
+| `ENCRYPTION_ENABLED`              | Enable GPG encryption for backup files (`true` or `false`).          | `false`             |
+| `ENCRYPTION_PUBLIC_KEY_PATH`      | Path to the GPG public key file for encrypting backups.              | `/app/public.asc`   |
+| `ENCRYPTION_PRIVATE_KEY_PATH`     | Path to the GPG private key file for decrypting backups.             | `/app/private.asc`  |
+| `ENCRYPTION_PRIVATE_KEY_PASSPHRASE` | Passphrase for the GPG private key (used for decryption only).     | _(empty)_           |
+
+## Encryption
+
+Services Backup supports GPG encryption for all backup files. When enabled, all backup files are automatically encrypted using GPG before being stored.
+
+### Generating GPG Keys
+
+To use encryption, you need to generate a GPG key pair. Here are the commands to create, export, and manage your GPG keys:
+
+#### 1. Generate a new GPG key pair
+
+```bash
+# Generate a new key pair interactively
+gpg --full-generate-key
+
+# Or use batch mode for automation
+gpg --batch --generate-key <<EOF
+%echo Generating GPG key for Services Backup
+Key-Type: RSA
+Key-Length: 4096
+Subkey-Type: RSA
+Subkey-Length: 4096
+Name-Real: Services Backups
+Name-Comment: Backups
+Name-Email: backup@test.com
+Expire-Date: 0
+Passphrase: your_secure_passphrase_here
+%commit
+%echo Done
+EOF
+```
+
+#### 2. List your keys
+
+```bash
+# List all keys
+gpg --list-keys
+
+# List secret keys
+gpg --list-secret-keys
+```
+
+#### 3. Export the public key
+
+Export public key (replace with your key ID or email)
+```bash
+gpg --armor --export backup@test.com > public.asc
+```
+
+#### 4. Export the private key
+
+Export private key (replace with your key ID or email)
+```bash
+gpg --armor --export-secret-keys backup@test.com > private.asc
+```
+
+### Docker Configuration
+
+When using Docker, you need to mount the GPG key files and configure the environment variables:
+
+```yaml
+services:
+  services-backup:
+    image: ghcr.io/hugoheml/services-backup:latest
+    environment:
+      # Encryption settings
+      - ENCRYPTION_ENABLED=true
+      - ENCRYPTION_PUBLIC_KEY_PATH=/app/keys/public.asc
+      - ENCRYPTION_PRIVATE_KEY_PATH=/app/keys/private.asc
+      - ENCRYPTION_PRIVATE_KEY_PASSPHRASE=your_secure_passphrase_here
+      
+      # Other environment variables...
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_PATH=/backups
+      
+    volumes:
+      # Mount your GPG keys
+      - ./keys:/app/keys:ro
+      # Mount backup storage
+      - ./backups:/backups
+```
+
+**Directory structure:**
+```
+.
+├── docker-compose.yaml
+├── keys/
+│   ├── public.asc    # Your GPG public key
+│   └── private.asc   # Your GPG private key
+└── backups/          # Backup storage directory
+```
+
+**Note:** The `keys` directory is mounted as read-only (`:ro`) for security. Make sure the key files have appropriate permissions (readable by the container user).
+
+### Decrypting Backups
+
+To decrypt your backup files, you can use the following methods:
+
+#### Method 1: Using GPG command line
+
+Decrypt a single backup file
+```bash
+gpg --decrypt backup-file.gz.asc > backup-file.gz
+```
+
+Decrypt with specific private key
+```bash
+gpg --decrypt --secret-keyring ./private.asc backup-file.gz.asc > backup-file.gz
+```
+
+For batch decryption with passphrase
+```bash
+echo "your_passphrase" | gpg --batch --yes --passphrase-fd 0 --decrypt backup-file.gz.asc > backup-file.gz
+```
+
 ## Roadmap
 
 Here are the features planned for future releases:

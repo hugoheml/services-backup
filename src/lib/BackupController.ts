@@ -9,6 +9,7 @@ import { AlertLevel } from "../services/alerts/types/AlertLevel";
 import { GetBackupsPerDestinationFolder } from "../services/backup/utils";
 import { FileFilesToFileFilesWithRetention } from "../services/storage/utils";
 import { FileResultWithRetention } from "../services/storage/types/FileResultWithRetention";
+import { IsEncryptionEnabled, EncryptFile } from "../services/files/encryption";
 
 const MAX_BACKUP_PER_ELEMENT = ConvertToNumber(process.env.MAX_BACKUP_PER_ELEMENT, 3); 
 // const MAX_BACKUP_SIZE_PER_SERVER = 
@@ -209,6 +210,10 @@ export class BackupController {
 					if (!backupFilePath) {
 						logger.error(`Failed to download backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}`);
 						continue;
+					}
+
+					if (IsEncryptionEnabled()) {
+						await EncryptFile(backupFilePath);
 					}
 
 					logger.info(`Uploading backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}...`);
