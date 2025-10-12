@@ -5,6 +5,8 @@ RUN apk add --no-cache \
     mysql-client \
     mariadb-connector-c \
     postgresql-client \
+    rsync \
+    openssh-client \
     tzdata
 
 WORKDIR /app

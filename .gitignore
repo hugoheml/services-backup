@@ -147,3 +147,8 @@ docker/volumes/*
 
 # ASC keys for encryption
 *.asc
+
+# Rsync keys
+docker/rsync/authorized_keys
+docker/rsync/id_ed25519
+docker/rsync/id_ed25519.pub

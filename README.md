@@ -11,6 +11,7 @@ Services Backup is a tool designed to automate the backup of various services. C
 - [**Pterodactyl**](https://pterodactyl.io/): A game server management panel.
 - [**MySQL/MariaDB**](https://mysql.com/): Popular relational database management systems.
 - [**PostgreSQL**](https://www.postgresql.org/): A powerful open-source relational database.
+- [**Rsync**](https://en.wikipedia.org/wiki/Rsync): Mirror remote folders over SSH using rsync.
 
 And the following storage classes:
 
@@ -47,6 +48,7 @@ This will start:
 - A local FTP server for testing storage functionality
 - A local MySQL server with sample databases for testing backup functionality
 - A local PostgreSQL server with sample databases for testing backup functionality
+- A local rsync target exposed over SSH for testing rsync-based backups
 - The application in development mode with hot-reloading
 
 Alternatively, if you prefer to run the application locally while using containerized services:
@@ -69,6 +71,7 @@ Alternatively, if you prefer to run the application locally while using containe
 For MySQL/MariaDB and PostgreSQL backup functionality in non-Docker deployments, the system requires:
 - `mysqldump` utility (usually included with MySQL/MariaDB client packages)
 - `pg_dump` utility (usually included with PostgreSQL client packages)
+- `rsync` utility available in the runtime environment for rsync-based backups.
 
 *Note: Docker deployments already include this dependency in the container.*
 
@@ -171,6 +174,32 @@ The `PERIODIC_BACKUP_RETENTION` setting allows you to define custom retention po
 | `POSTGRES_FOLDER_PATH`             | Base path to store PostgreSQL backups on the remote storage.   | `postgresql`                       |
 | `POSTGRES_SSL_ENABLED`             | Enable SSL for PostgreSQL connection (`true` or `false`).      | `false`                            |
 | `POSTGRES_SSL_REJECT_UNAUTHORIZED` | Reject self-signed certificates when SSL is enabled (`true`).  | `true`                             |
+
+### Rsync Settings
+
+| Variable               | Description                                                                                                      | Default   |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------- | --------- |
+| `BACKUP_RSYNC`         | Enable rsync-based backups (`true` or `false`).                                                                  | `false`   |
+| `RSYNC_FOLDER_PATH`    | Base path to store rsync archives on the remote storage.                                                         | `rsync`   |
+| `RSYNC_TARGET_NAME`    | Friendly name for the rsync target (defaults to host when empty).                                                | `remote-server`            |
+| `RSYNC_TARGET_HOST`    | Remote host to sync from. Supports IPv4 and IPv6.                                                                | _(empty)_                  |
+| `RSYNC_TARGET_USER`    | SSH user for the remote host.                                                                                    | _(empty)_                  |
+| `RSYNC_TARGET_PORT`    | SSH port for the remote host.                                                                                    | `22`                       |
+| `RSYNC_TARGET_PATH`    | Remote directory to mirror.                                                                                      | _(empty)_                  |
+| `RSYNC_SSH_KEY_PATH`   | Optional path to the private SSH key used by rsync.                                                              | _(empty)_                  |
+| `RSYNC_EXCLUDES`       | Comma-separated list of patterns ignored during sync (e.g. `node_modules,tmp`).                                 | _(empty)_                  |
+| `RSYNC_SSH_OPTIONS`    | Additional SSH options appended to the rsync SSH command. Useful for disabling host key checks during testing.  | _(empty)_                  |
+| `RSYNC_EXTRA_ARGS`     | Additional rsync arguments (space separated, double quotes supported for paths or arguments that contain spaces) | _(empty)_                  |
+
+The default development `.env` values point `RSYNC_TARGET_HOST` to this container (`rsync`) and mount the generated SSH private key at `/app/docker_keys/id_ed25519`. The files served over rsync live in `docker/rsync/data`.
+
+To generate the development key pair, run the helper script and recreate the container:
+
+```bash
+bash docker/rsync/generate-keys.sh
+docker compose -f docker-compose-dev.yaml build rsync
+docker compose -f docker-compose-dev.yaml up -d rsync
+```
 
 ### Storage Settings
 
@@ -340,6 +369,5 @@ Here are the features planned for future releases:
 - [ ] Add a maximum storage threshold to avoid filling up the storage space.
 - [ ] Add more alert systems for backup failures.
 - [ ] Add support for more services and storage classes.
-- [ ] Add `rsync` command support
 - [ ] Make some tutorials for backuping some services
 - [ ] Rework the files organization (especially in `services/` folder).
