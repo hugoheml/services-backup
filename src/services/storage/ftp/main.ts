@@ -1,6 +1,7 @@
 import { Client } from "basic-ftp";
 import { StorageClass } from "../StorageClass";
 import { logger } from "../../log";
+import { convertToIP } from '../../../utils/ip';
 
 const { FTP_HOST, FTP_PORT, FTP_USER, FTP_PASSWORD } = process.env;
 
@@ -13,14 +14,17 @@ export class FTPStorage extends StorageClass {
 	}
 
 	async connect() {
+		// Convert FTP_HOST to IP (https://github.com/patrickjuchli/basic-ftp/issues/123)
+		const hostIp = await convertToIP(FTP_HOST);
+
 		await this.client.access({
-			host: FTP_HOST,
+			host: hostIp,
 			port: +FTP_PORT,
 			user: FTP_USER,
 			password: FTP_PASSWORD,
 		});
 
-		logger.info(`Connected to FTP server: ${FTP_HOST}`);
+		logger.info(`Connected to FTP server: ${hostIp}:${FTP_PORT}`);
 	}
 
 	async deleteFile(filePath: string) {
