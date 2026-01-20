@@ -12,6 +12,7 @@ Services Backup is a tool designed to automate the backup of various services. C
 - [**MySQL/MariaDB**](https://mysql.com/): Popular relational database management systems.
 - [**PostgreSQL**](https://www.postgresql.org/): A powerful open-source relational database.
 - [**Rsync**](https://en.wikipedia.org/wiki/Rsync): Mirror remote folders over SSH using rsync.
+- **Local Files**: Backup local files and folders with support for exclusion patterns.
 
 And the following storage classes:
 
@@ -200,6 +201,45 @@ To generate the development key pair, run the helper script and recreate the con
 bash docker/rsync/generate-keys.sh
 docker compose -f docker-compose-dev.yaml build rsync
 docker compose -f docker-compose-dev.yaml up -d rsync
+```
+
+### Local Files Settings
+
+| Variable                  | Description                                                                           | Default                    |
+| ------------------------- | ------------------------------------------------------------------------------------- | -------------------------- |
+| `BACKUP_LOCAL_FILES`      | Enable backup for local files and folders (`true` or `false`).                        | `false`                    |
+| `LOCAL_FILES_PATH`        | Absolute path to the file or folder to backup.                                        | _(empty)_                  |
+| `LOCAL_FILES_IGNORE`      | Comma-separated list of patterns to exclude from the archive (e.g., `*.log,cache/*`). | _(empty)_                  |
+| `LOCAL_FILES_FOLDER_PATH` | Base path to store local files backups on the remote storage.                         | `local-files`              |
+| `LOCAL_FILES_TMP_DIR`     | Temporary directory to create archives before uploading.                              | `/tmp/local-files-backups` |
+
+#### Local Files Configuration Examples
+
+The local files backup service allows you to backup a single file or directory with optional exclusion patterns.
+
+**Example 1: Backup a single folder**
+```bash
+BACKUP_LOCAL_FILES=true
+LOCAL_FILES_PATH=/etc/myapp
+```
+
+**Example 2: Backup with exclusions**
+```bash
+BACKUP_LOCAL_FILES=true
+LOCAL_FILES_PATH=/home/user/Documents
+LOCAL_FILES_IGNORE=*.log,*.tmp,cache/*,node_modules
+```
+
+**Example 3: Docker configuration**
+```yaml
+services:
+  services-backup:
+    environment:
+      - BACKUP_LOCAL_FILES=true
+      - LOCAL_FILES_PATH=/data
+      - LOCAL_FILES_IGNORE=*.log,temp/*
+    volumes:
+      - /path/to/backup:/data:ro
 ```
 
 ### Storage Settings

@@ -6,6 +6,7 @@ import { BackupController } from "./lib/BackupController";
 import { MysqlBackupService } from "./services/backup/mysql/MysqlBackupService";
 import { PostgresqlBackupService } from "./services/backup/postgresql/PostgresqlBackupService";
 import { RsyncBackupService } from "./services/backup/rsync/RsyncBackupService";
+import { LocalFilesBackupService } from "./services/backup/localfiles/LocalFilesBackupService";
 import { AlertManager } from "./services/alerts/AlertManager";
 import { logger } from "./services/log";
 import { BackupService } from "./services/backup/BackupService";
@@ -16,6 +17,7 @@ const BACKUP_PTERODACTYL = process.env.BACKUP_PTERODACTYL === "true";
 const BACKUP_MYSQL = process.env.BACKUP_MYSQL === "true";
 const BACKUP_POSTGRESQL = process.env.BACKUP_POSTGRESQL === "true";
 const BACKUP_RSYNC = process.env.BACKUP_RSYNC === "true";
+const BACKUP_LOCAL_FILES = process.env.BACKUP_LOCAL_FILES === "true";
 const ALERT_AFTER_PROCESS = process.env.ALERT_AFTER_PROCESS === "true";
 
 async function processBackup(backupService: BackupService, storageClass: StorageClass, alertManager: AlertManager) {
@@ -90,6 +92,11 @@ async function main() {
 	if (BACKUP_RSYNC) {
 		const rsyncBackupService = new RsyncBackupService();
 		await processBackup(rsyncBackupService, storageClass, alertManager);
+	}
+
+	if (BACKUP_LOCAL_FILES) {
+		const localFilesBackupService = new LocalFilesBackupService();
+		await processBackup(localFilesBackupService, storageClass, alertManager);
 	}
 
 	await storageClass.close();
