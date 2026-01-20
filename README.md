@@ -244,8 +244,6 @@ Backups will be saved in the `./backups` directory on the host machine.
 | --------------------------------- | --------------------------------------------------------------------- | ------------------- |
 | `ENCRYPTION_ENABLED`              | Enable GPG encryption for backup files (`true` or `false`).          | `false`             |
 | `ENCRYPTION_PUBLIC_KEY_PATH`      | Path to the GPG public key file for encrypting backups.              | `/app/public.asc`   |
-| `ENCRYPTION_PRIVATE_KEY_PATH`     | Path to the GPG private key file for decrypting backups.             | `/app/private.asc`  |
-| `ENCRYPTION_PRIVATE_KEY_PASSPHRASE` | Passphrase for the GPG private key (used for decryption only).     | _(empty)_           |
 
 ## Encryption
 
@@ -314,8 +312,6 @@ services:
       # Encryption settings
       - ENCRYPTION_ENABLED=true
       - ENCRYPTION_PUBLIC_KEY_PATH=/app/keys/public.asc
-      - ENCRYPTION_PRIVATE_KEY_PATH=/app/keys/private.asc
-      - ENCRYPTION_PRIVATE_KEY_PASSPHRASE=your_secure_passphrase_here
       
       # Other environment variables...
       - STORAGE_TYPE=local
@@ -360,6 +356,8 @@ For batch decryption with passphrase
 ```bash
 echo "your_passphrase" | gpg --batch --yes --passphrase-fd 0 --decrypt backup-file.gz.asc > backup-file.gz
 ```
+
+Warn: This method expose your passphrase in your `bash` history.
 
 ## Roadmap
 

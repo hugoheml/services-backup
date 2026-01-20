@@ -3,7 +3,7 @@ import { createMessage, encrypt, readKey } from "openpgp";
 import { readFile, writeFile } from "node:fs/promises";
 import { logger } from "../log";
 
-const { ENCRYPTION_ENABLED, ENCRYPTION_PUBLIC_KEY_PATH, ENCRYPTION_PRIVATE_KEY_PATH, ENCRYPTION_PRIVATE_KEY_PASSPHRASE } = process.env;
+const { ENCRYPTION_ENABLED, ENCRYPTION_PUBLIC_KEY_PATH } = process.env;
 
 const ENCRYPTION_ENABLED_BOOL = ENCRYPTION_ENABLED === 'true';
 
