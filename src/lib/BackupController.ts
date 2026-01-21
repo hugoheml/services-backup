@@ -146,6 +146,36 @@ export class BackupController {
 		return trimmedBackups;
 	}
 
+	async initStorageClass() {
+		try {
+			await this.backupService.init();
+		} catch (error) {
+			logger.error(`Failed to initialize backup service: ${this.backupService.constructor.name}, error: ${error}`);
+			await this.alertManager.sendAlert({
+				level: AlertLevel.ERROR,
+				message: `Failed to initialize backup service`,
+				fields: [
+					{ name: `Affected service`, value: this.backupService.constructor.name }
+				]
+			});
+		}
+	}
+
+	async closeStorageClass() {
+		try {
+			await this.backupService.close();
+		} catch (error) {
+			logger.error(`Failed to close backup service: ${this.backupService.constructor.name}, error: ${error}`);
+			await this.alertManager.sendAlert({
+				level: AlertLevel.ERROR,
+				message: `Failed to close backup service`,
+				fields: [
+					{ name: `Affected service`, value: this.backupService.constructor.name }
+				]
+			});
+		}
+	}
+
 	async process() {
 		try {
 			logger.info(`Starting backup process for service: ${this.backupService.SERVICE_NAME}`);
@@ -216,9 +246,13 @@ export class BackupController {
 						await EncryptFile(backupFilePath);
 					}
 
+					await this.initStorageClass();
+
 					logger.info(`Uploading backup ${backupMetadata.uuid} for ${backupMetadata.parentElement}...`);
 					await this.storageClass.uploadFile(backupFilePath, destinationPath);
 					logger.info(`Uploaded backup file ${backupFilePath} (${backupMetadata.uuid}) to ${destinationPath}`);
+
+					await this.closeStorageClass();
 
 					unlinkSync(backupFilePath);
 

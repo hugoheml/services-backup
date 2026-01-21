@@ -21,34 +21,18 @@ const BACKUP_LOCAL_FILES = process.env.BACKUP_LOCAL_FILES === "true";
 const ALERT_AFTER_PROCESS = process.env.ALERT_AFTER_PROCESS === "true";
 
 async function processBackup(backupService: BackupService, storageClass: StorageClass, alertManager: AlertManager) {
-	try {
-		await backupService.init();
-	} catch (error) {
-		logger.error(`Failed to initialize backup service: ${backupService.constructor.name}, error: ${error}`);
-		await alertManager.sendAlert({
-			level: AlertLevel.ERROR,
-			message: `Failed to initialize backup service`,
-			fields: [
-				{ name: `Affected service`, value: backupService.constructor.name }
-			]
-		});
-		throw error;
-	}
-
 	const backupController = new BackupController(backupService, storageClass, alertManager);
 	await backupController.process();
 
 	if (ALERT_AFTER_PROCESS) {
 		await alertManager.sendAlert({
 			level: AlertLevel.INFO,
-			message: `Backup script has been executed`,
+			message: `Backup script is being executed`,
 			fields: [
 				{ name: `Affected service`, value: backupService.constructor.name }
 			]
 		});
 	}
-
-	await backupService.close();
 }
 
 async function main() {
