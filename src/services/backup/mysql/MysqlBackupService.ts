@@ -6,7 +6,7 @@ import { statSync } from "node:fs";
 
 const { MYSQL_FOLDER_PATH, MYSQL_IGNORE_DATABASES } = process.env;
 
-const DATABASES_TO_IGNORE = (MYSQL_IGNORE_DATABASES || "").split(',');
+const DATABASES_TO_IGNORE = (MYSQL_IGNORE_DATABASES || "information_schema,performance_schema,mysql,sys").split(',');
 
 export class MysqlBackupService extends BackupService {
 	SERVICE_NAME = "mysql";
