@@ -48,7 +48,7 @@ async function processBackup(backupService: BackupService, storageClass: Storage
 		});
 	}
 
-	backupService.close();
+	await backupService.close();
 }
 
 async function main() {
