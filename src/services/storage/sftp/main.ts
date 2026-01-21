@@ -15,6 +15,7 @@ const {
 
 export class SFTPStorage extends StorageClass {
 	private client: SftpClient;
+	private keepaliveInterval: number = 5_000; // 5 seconds
 
 	constructor() {
 		super();
@@ -30,6 +31,8 @@ export class SFTPStorage extends StorageClass {
 			host: hostIp,
 			port: SFTP_PORT ? +SFTP_PORT : 22,
 			username: SFTP_USER,
+			debug: (msg: string) => logger.debug(msg),
+			keepaliveInterval: this.keepaliveInterval
 		};
 
 		// Authentication: prefer SSH key over password
