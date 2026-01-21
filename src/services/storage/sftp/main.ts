@@ -85,7 +85,6 @@ export class SFTPStorage extends StorageClass {
 		try {
 			const readStream = fs.createReadStream(filePath);
 			await this.client.put(readStream, destination, {
-				concurrency: 64,
 				step: (transferred, chunk, total) => {
 					logger.verbose(`Uploading ${filePath}: ${((transferred / total) * 100).toFixed(2)}%`);
 				}
