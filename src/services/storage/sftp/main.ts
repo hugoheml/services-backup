@@ -32,7 +32,7 @@ export class SFTPStorage extends StorageClass {
 			host: hostIp,
 			port: SFTP_PORT ? +SFTP_PORT : 22,
 			username: SFTP_USER,
-			debug: (msg: string) => logger.silly(msg),
+			debug: (msg: string) => logger.debug(msg),
 			keepaliveInterval: this.keepaliveInterval,
 			keepaliveCountMax: this.keepaliveCountMax
 		};
@@ -84,11 +84,7 @@ export class SFTPStorage extends StorageClass {
 
 		try {
 			const readStream = fs.createReadStream(filePath);
-			await this.client.put(readStream, destination, {
-				step: (transferred, chunk, total) => {
-					logger.verbose(`Uploading ${filePath}: ${((transferred / total) * 100).toFixed(2)}%`);
-				}
-			});
+			await this.client.put(readStream, destination);
 			logger.debug(`Uploaded file: ${filePath}, to: ${destination}`);
 		} catch (error) {
 			logger.error(`Failed to upload file ${filePath} to ${destination}: ${error}`);
