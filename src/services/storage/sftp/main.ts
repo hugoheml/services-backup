@@ -31,7 +31,7 @@ export class SFTPStorage extends StorageClass {
 			host: hostIp,
 			port: SFTP_PORT ? +SFTP_PORT : 22,
 			username: SFTP_USER,
-			debug: (msg: string) => logger.debug(msg),
+			debug: (msg: string) => logger.verbose(msg),
 			keepaliveInterval: this.keepaliveInterval
 		};
 
