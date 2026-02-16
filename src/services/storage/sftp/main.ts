@@ -15,6 +15,8 @@ const {
 
 export class SFTPStorage extends StorageClass {
 	private client: SftpClient;
+	private keepaliveInterval: number = 5_000; // 5 seconds
+	private keepaliveCountMax: number = 1_000; // Max keepalive attempts
 
 	constructor() {
 		super();
@@ -30,6 +32,9 @@ export class SFTPStorage extends StorageClass {
 			host: hostIp,
 			port: SFTP_PORT ? +SFTP_PORT : 22,
 			username: SFTP_USER,
+			debug: (msg: string) => logger.silly(msg),
+			keepaliveInterval: this.keepaliveInterval,
+			keepaliveCountMax: this.keepaliveCountMax
 		};
 
 		// Authentication: prefer SSH key over password
@@ -55,57 +60,90 @@ export class SFTPStorage extends StorageClass {
 		logger.info(`Connected to SFTP server: ${hostIp}:${config.port}`);
 	}
 
+	async disconnect() {
+		await this.client.end();
+		logger.info(`Disconnected from SFTP server`);
+	}
+
 	async deleteFile(filePath: string) {
+		await this.connect();
+
 		try {
 			await this.client.delete(filePath);
 			logger.debug(`Deleted file: ${filePath}`);
 		} catch (error) {
 			logger.error(`Failed to delete file ${filePath}: ${error}`);
 			throw error;
+		} finally {
+			await this.disconnect();
 		}
 	}
 
 	async uploadFile(filePath: string, destination: string) {
+		await this.connect();
+
 		try {
-			await this.client.put(filePath, destination);
+			await this.client.fastPut(filePath, destination, {
+				concurrency: 64,
+				chunkSize: 32768,
+				step: (totalTransferred, chunk, total) => {
+					logger.debug(`Upload progress: ${((totalTransferred / total) * 100).toFixed(2)}%`);
+				}
+			})
 			logger.debug(`Uploaded file: ${filePath}, to: ${destination}`);
 		} catch (error) {
 			logger.error(`Failed to upload file ${filePath} to ${destination}: ${error}`);
 			throw error;
+		} finally {
+			await this.disconnect();
 		}
 	}
 
 	async createFolder(folderPath: string) {
+		await this.connect();
+
 		try {
 			await this.client.mkdir(folderPath, true); // recursive = true
 			logger.debug(`Created folder: ${folderPath}`);
 		} catch (error) {
 			logger.error(`Failed to create folder ${folderPath}: ${error}`);
 			throw error;
+		} finally {
+			await this.disconnect();
 		}
 	}
 
 	async deleteFolder(folderPath: string) {
+		await this.connect();
+
 		try {
 			await this.client.rmdir(folderPath, true); // recursive = true
 			logger.debug(`Deleted folder: ${folderPath}`);
 		} catch (error) {
 			logger.error(`Failed to delete folder ${folderPath}: ${error}`);
 			throw error;
+		} finally {
+			await this.disconnect();
 		}
 	}
 
 	async folderExists(folderPath: string): Promise<boolean> {
+		await this.connect();
+
 		try {
 			const stat = await this.client.stat(folderPath);
 			return stat.isDirectory;
 		} catch (error) {
 			// If stat fails, the folder doesn't exist
 			return false;
+		} finally {
+			await this.disconnect();
 		}
 	}
 
 	async folderSizeBytes(folderPath: string) {
+		await this.connect();
+
 		try {
 			const list = await this.client.list(folderPath);
 			let totalSize = 0;
@@ -124,10 +162,14 @@ export class SFTPStorage extends StorageClass {
 		} catch (error) {
 			logger.error(`Failed to calculate folder size for ${folderPath}: ${error}`);
 			throw error;
+		} finally {
+			await this.disconnect();
 		}
 	}
 
 	async listFiles(folderPath: string) {
+		await this.connect();
+
 		try {
 			const list = await this.client.list(folderPath);
 
@@ -141,14 +183,14 @@ export class SFTPStorage extends StorageClass {
 		} catch (error) {
 			logger.error(`Failed to list files in folder ${folderPath}: ${error}`);
 			throw error;
+		} finally {
+			await this.disconnect();
 		}
 	}
 
 	async close() {
-		await this.client.end();
 	}
 
 	async init() {
-		await this.connect();
 	}
 }

@@ -151,9 +151,12 @@ async function runCommand(command: string, args: string[], options?: CommandOpti
 	});
 }
 
-function buildRsyncArgs(target: RsyncTarget, destination: string) {
-	const args = ["-az"];
+export function isArchiveFile(fileName: string) {
+	const extensions = [".tar.gz", ".tgz", ".tar"];
+	return extensions.some((ext) => fileName.endsWith(ext));
+}
 
+function buildSshCommand(target: RsyncTarget): string[] {
 	const sshParts = ["ssh"];
 
 	if (target.port) {
@@ -168,6 +171,14 @@ function buildRsyncArgs(target: RsyncTarget, destination: string) {
 		sshParts.push(option);
 	}
 
+	return sshParts;
+}
+
+function buildRsyncArgs(target: RsyncTarget, destination: string, specificPath?: string) {
+	const args = ["-az"];
+
+	const sshParts = buildSshCommand(target);
+
 	for (const exclude of target.excludes) {
 		args.push("--exclude", exclude);
 	}
@@ -176,27 +187,75 @@ function buildRsyncArgs(target: RsyncTarget, destination: string) {
 
 	args.push("-e", sshParts.join(" "));
 
-	const remoteSpec = `${target.user ? `${target.user}@` : ""}${formatHost(target.host)}:${target.path}`;
+	const remotePath = specificPath || target.path;
+	const remoteSpec = `${target.user ? `${target.user}@` : ""}${formatHost(target.host)}:${remotePath}`;
 	args.push(remoteSpec, destination);
 
 	return args;
 }
 
-export async function createArchiveForTarget(target: RsyncTarget) {
-	const sanitizedName = sanitizeName(target.name);
+export async function listRemoteFiles(target: RsyncTarget, remotePath: string): Promise<string[]> {
+	const sshCommand = buildSshCommand(target);
+	const host = formatHost(target.host);
+	const remoteHost = target.user ? `${target.user}@${host}` : host;
+
+	const findCommand = `find "${remotePath}" -mindepth 1 -maxdepth 1 -printf '%f\\n'`;
+
+	const [bin, ...sshArgs] = sshCommand;
+	const args = [...sshArgs, remoteHost, findCommand];
+
+	return new Promise<string[]>((resolve, reject) => {
+		const child = spawn(bin, args, { stdio: ["ignore", "pipe", "pipe"] });
+
+		let stdout = "";
+		let stderr = "";
+
+		child.stdout?.on("data", (data) => stdout += data.toString());
+		child.stderr?.on("data", (data) => stderr += data.toString());
+
+		child.on("close", (code) => {
+			if (code === 0) {
+				const files = stdout.trim().split("\n").filter(l => l.length > 0);
+				resolve(files);
+			} else {
+				reject(new Error(`SSH Exit ${code}: ${stdout} - ${stderr.trim()}`));
+			}
+		});
+	});
+}
+
+export async function createArchiveForTarget(target: RsyncTarget, specificPath?: string, itemName?: string) {
+	const sanitizedName = itemName ? sanitizeName(itemName) : sanitizeName(target.name);
 	const date = new Date();
 	const timestamp = buildTimestamp(date);
 
 	const workingDirectory = join(RSYNC_TMP_ROOT, `${sanitizedName}-${timestamp}`);
-	const archiveName = `${sanitizedName}-${timestamp}.tar.gz`;
-	const archivePath = join(RSYNC_TMP_ROOT, archiveName);
+	let archiveName = `${sanitizedName}-${timestamp}.tar.gz`;
+	let archivePath = join(RSYNC_TMP_ROOT, archiveName);
 
 	mkdirSync(workingDirectory, { recursive: true });
 
+	const remotePath = specificPath || target.path;
+	const displayPath = specificPath ? `${target.path}/${specificPath}` : target.path;
+
 	try {
-		logger.info(`[rsync] Starting sync for "${target.name}" (${target.host}:${target.path}).`);
-		const rsyncArgs = buildRsyncArgs(target, workingDirectory);
+		logger.info(`[rsync] Starting sync for "${target.name}" (${target.host}:${displayPath}).`);
+		const rsyncArgs = buildRsyncArgs(target, workingDirectory, remotePath);
 		await runCommand("rsync", rsyncArgs, { logPrefix: "rsync" });
+
+		if (!isArchiveFile(archiveName)) {
+			archiveName += ".tar.gz";
+			archivePath = join(RSYNC_TMP_ROOT, archiveName);
+
+			return {
+				archiveName,
+				archivePath,
+				sanitizedName: archiveName,
+				timestamp,
+				size: statSync(archivePath).size,
+				date
+			};
+		}
 
 		logger.info(`[rsync] Creating archive for "${target.name}".`);
 		await runCommand("tar", ["-czf", archivePath, "-C", workingDirectory, "."], { logPrefix: "tar" });
