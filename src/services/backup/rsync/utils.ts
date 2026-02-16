@@ -218,7 +218,7 @@ export async function listRemoteFiles(target: RsyncTarget, remotePath: string): 
 				const files = stdout.trim().split("\n").filter(l => l.length > 0);
 				resolve(files);
 			} else {
-				reject(new Error(`SSH Exit ${code}: ${stderr.trim()}`));
+				reject(new Error(`SSH Exit ${code}: ${stdout} - ${stderr.trim()}`));
 			}
 		});
 	});
