@@ -205,41 +205,21 @@ export async function listRemoteFiles(target: RsyncTarget, remotePath: string): 
 	const args = [...sshArgs, remoteHost, findCommand];
 
 	return new Promise<string[]>((resolve, reject) => {
-		const child = spawn(bin, args, {
-			stdio: ["ignore", "pipe", "pipe"]
-		});
+		const child = spawn(bin, args, { stdio: ["ignore", "pipe", "pipe"] });
 
 		let stdout = "";
 		let stderr = "";
 
-		child.stdout?.on("data", (data) => {
-			stdout += data.toString();
-		});
-
-		child.stderr?.on("data", (data) => {
-			stderr += data.toString();
-		});
-
-		child.on("error", (error) => {
-			logger.error(`[rsync] Failed to list remote files: ${error}`);
-			reject(error);
-		});
+		child.stdout?.on("data", (data) => stdout += data.toString());
+		child.stderr?.on("data", (data) => stderr += data.toString());
 
 		child.on("close", (code) => {
 			if (code === 0) {
-				const files = stdout
-					.trim()
-					.split("\n")
-					.filter(line => line.length > 0);
-
-				logger.debug(`[rsync] Remote files found: ${files.length}`);
+				const files = stdout.trim().split("\n").filter(l => l.length > 0);
 				resolve(files);
-				return;
+			} else {
+				reject(new Error(`SSH Exit ${code}: ${stderr.trim()}`));
 			}
-
-			const errorMsg = stderr.trim() || "Unknown SSH error";
-			logger.error(`[rsync] Failed to list remote files. Exit code ${code}. Stderr: ${errorMsg}`);
-			reject(new Error(`Failed to list remote files: ${errorMsg}`));
 		});
 	});
 }
