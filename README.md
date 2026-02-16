@@ -193,6 +193,43 @@ The `PERIODIC_BACKUP_RETENTION` setting allows you to define custom retention po
 | `RSYNC_SSH_OPTIONS`  | Additional SSH options appended to the rsync SSH command. Useful for disabling host key checks during testing.   | _(empty)_       |
 | `RSYNC_EXTRA_ARGS`   | Additional rsync arguments (space separated, double quotes supported for paths or arguments that contain spaces) | _(empty)_       |
 
+#### Rsync Backup Modes
+
+The rsync backup service supports two different backup modes depending on the path configuration:
+
+**Single Backup Mode (without `/*`):**
+
+When `RSYNC_TARGET_PATH` does not end with `/*`, the entire directory content is backed up as a single archive with a timestamp. A new backup is created at each execution.
+
+```bash
+RSYNC_TARGET_PATH=/var/www/mysite
+```
+
+Result:
+- Creates: `mysite-2026-02-16-14-30-00.tar.gz`
+- Behavior: New backup at each execution
+- Storage: `rsync/mysite/mysite-2026-02-16-14-30-00.tar.gz`
+
+**Multi-Backup Mode (with `/*`):**
+
+When `RSYNC_TARGET_PATH` ends with `/*`, each file and subdirectory is backed up individually **without timestamp**. This prevents duplicate backups: if a backup already exists for an item, it is skipped.
+
+```bash
+RSYNC_TARGET_PATH=/var/www/*
+```
+
+Result (assuming `/var/www/` contains `site1`, `site2`, `site3`):
+- Creates: `site1.tar.gz`, `site2.tar.gz`, `site3.tar.gz`
+- Behavior: Backup only created if file doesn't exist
+- Storage: `rsync/target-name/site1/site1.tar.gz`, `rsync/target-name/site2/site2.tar.gz`, etc.
+
+**Use Cases:**
+
+- **Single mode**: For backing up a complete application with versioning (database backups, complete application snapshots)
+- **Multi mode**: For backing up multiple independent sites/projects where you only want to backup once and skip duplicates (web hosting directories, user folders)
+
+#### Development Setup
+
 The default development `.env` values point `RSYNC_TARGET_HOST` to this container (`rsync`) and mount the generated SSH private key at `/app/docker_keys/id_ed25519`. The files served over rsync live in `docker/rsync/data`.
 
 To generate the development key pair, run the helper script and recreate the container:
