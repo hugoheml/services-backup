@@ -199,13 +199,13 @@ export async function listRemoteFiles(target: RsyncTarget, remotePath: string): 
 	const host = formatHost(target.host);
 	const remoteHost = target.user ? `${target.user}@${host}` : host;
 
-	// Use find to list only direct children (maxdepth 1) and get basename
 	const findCommand = `find "${remotePath}" -mindepth 1 -maxdepth 1 -printf '%f\\n'`;
 
-	const args = [...sshCommand, remoteHost, findCommand];
+	const [bin, ...sshArgs] = sshCommand;
+	const args = [...sshArgs, remoteHost, findCommand];
 
 	return new Promise<string[]>((resolve, reject) => {
-		const child = spawn("ssh", args, {
+		const child = spawn(bin, args, {
 			stdio: ["ignore", "pipe", "pipe"]
 		});
 
@@ -231,12 +231,15 @@ export async function listRemoteFiles(target: RsyncTarget, remotePath: string): 
 					.trim()
 					.split("\n")
 					.filter(line => line.length > 0);
+
+				logger.debug(`[rsync] Remote files found: ${files.length}`);
 				resolve(files);
 				return;
 			}
 
-			logger.error(`[rsync] Failed to list remote files. Exit code ${code}. Stderr: ${stderr.trim()}`);
-			reject(new Error(`Failed to list remote files: ${stderr.trim()}`));
+			const errorMsg = stderr.trim() || "Unknown SSH error";
+			logger.error(`[rsync] Failed to list remote files. Exit code ${code}. Stderr: ${errorMsg}`);
+			reject(new Error(`Failed to list remote files: ${errorMsg}`));
 		});
 	});
 }
