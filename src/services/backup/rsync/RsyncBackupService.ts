@@ -31,8 +31,8 @@ export class RsyncBackupService extends BackupService {
 		}
 
 		try {
-			// Check if path ends with /*
-			if (this.target.path.endsWith("/*")) {
+			// Check if path ends with *
+			if (this.target.path.endsWith("*")) {
 				return await this.getMultipleBackups();
 			} else {
 				return await this.getSingleBackup();
@@ -69,7 +69,7 @@ export class RsyncBackupService extends BackupService {
 		}
 
 		// Remove /* from the path to get the base directory
-		const basePath = this.target.path.slice(0, -2);
+		const basePath = this.target.path.endsWith("/*") ? this.target.path.slice(0, -2) : this.target.path.endsWith("*") ? this.target.path.slice(0, -1) : this.target.path;
 
 		logger.info(`[rsync] Listing files in remote directory: ${basePath}`);
 		const remoteFiles = await listRemoteFiles(this.target, basePath);
