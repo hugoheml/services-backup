@@ -151,6 +151,11 @@ async function runCommand(command: string, args: string[], options?: CommandOpti
 	});
 }
 
+export function isArchiveFile(fileName: string) {
+	const extensions = [".tar.gz", ".tgz", ".tar"];
+	return extensions.some((ext) => fileName.endsWith(ext));
+}
+
 function buildRsyncArgs(target: RsyncTarget, destination: string) {
 	const args = ["-az"];
 
@@ -188,8 +193,8 @@ export async function createArchiveForTarget(target: RsyncTarget) {
 	const timestamp = buildTimestamp(date);
 
 	const workingDirectory = join(RSYNC_TMP_ROOT, `${sanitizedName}-${timestamp}`);
-	const archiveName = `${sanitizedName}-${timestamp}.tar.gz`;
-	const archivePath = join(RSYNC_TMP_ROOT, archiveName);
+	let archiveName = `${sanitizedName}-${timestamp}.tar.gz`;
+	let archivePath = join(RSYNC_TMP_ROOT, archiveName);
 
 	mkdirSync(workingDirectory, { recursive: true });
 
@@ -197,6 +202,20 @@ export async function createArchiveForTarget(target: RsyncTarget) {
 		logger.info(`[rsync] Starting sync for "${target.name}" (${target.host}:${target.path}).`);
 		const rsyncArgs = buildRsyncArgs(target, workingDirectory);
 		await runCommand("rsync", rsyncArgs, { logPrefix: "rsync" });
+
+		if (!isArchiveFile(archiveName)) {
+			archiveName += ".tar.gz";
+			archivePath = join(RSYNC_TMP_ROOT, archiveName);
+
+			return {
+				archiveName,
+				archivePath,
+				sanitizedName: archiveName,
+				timestamp,
+				size: statSync(archivePath).size,
+				date
+			};
+		}
 
 		logger.info(`[rsync] Creating archive for "${target.name}".`);
 		await runCommand("tar", ["-czf", archivePath, "-C", workingDirectory, "."], { logPrefix: "tar" });
