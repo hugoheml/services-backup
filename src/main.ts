@@ -7,6 +7,7 @@ import { MysqlBackupService } from "./services/backup/mysql/MysqlBackupService";
 import { PostgresqlBackupService } from "./services/backup/postgresql/PostgresqlBackupService";
 import { RsyncBackupService } from "./services/backup/rsync/RsyncBackupService";
 import { LocalFilesBackupService } from "./services/backup/localfiles/LocalFilesBackupService";
+import { SftpBackupService } from "./services/backup/sftp/SftpBackupService";
 import { AlertManager } from "./services/alerts/AlertManager";
 import { logger } from "./services/log";
 import { BackupService } from "./services/backup/BackupService";
@@ -18,6 +19,7 @@ const BACKUP_MYSQL = process.env.BACKUP_MYSQL === "true";
 const BACKUP_POSTGRESQL = process.env.BACKUP_POSTGRESQL === "true";
 const BACKUP_RSYNC = process.env.BACKUP_RSYNC === "true";
 const BACKUP_LOCAL_FILES = process.env.BACKUP_LOCAL_FILES === "true";
+const BACKUP_SFTP = process.env.BACKUP_SFTP === "true";
 const ALERT_AFTER_PROCESS = process.env.ALERT_AFTER_PROCESS === "true";
 
 async function processBackup(backupService: BackupService, storageClass: StorageClass, alertManager: AlertManager) {
@@ -97,6 +99,11 @@ async function main() {
 	if (BACKUP_LOCAL_FILES) {
 		const localFilesBackupService = new LocalFilesBackupService();
 		await processBackup(localFilesBackupService, storageClass, alertManager);
+	}
+
+	if (BACKUP_SFTP) {
+		const sftpBackupService = new SftpBackupService();
+		await processBackup(sftpBackupService, storageClass, alertManager);
 	}
 
 	await storageClass.close();

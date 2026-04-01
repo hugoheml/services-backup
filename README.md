@@ -13,6 +13,7 @@ Services Backup is a tool designed to automate the backup of various services. C
 - [**PostgreSQL**](https://www.postgresql.org/): A powerful open-source relational database.
 - [**Rsync**](https://en.wikipedia.org/wiki/Rsync): Mirror remote folders over SSH using rsync.
 - **Local Files**: Backup local files and folders with support for exclusion patterns.
+- [**SFTP**](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol): Download files from a remote SFTP server, supporting password and SSH key authentication.
 
 And the following storage classes:
 
@@ -278,6 +279,41 @@ services:
     volumes:
       - /path/to/backup:/data:ro
 ```
+
+### SFTP Backup Settings
+
+| Variable                       | Description                                                                            | Default   |
+| ------------------------------ | -------------------------------------------------------------------------------------- | --------- |
+| `BACKUP_SFTP`                  | Enable backup from a remote SFTP server (`true` or `false`).                           | `false`   |
+| `SFTP_BACKUP_HOST`             | Remote SFTP server host.                                                               | _(empty)_ |
+| `SFTP_BACKUP_PORT`             | Remote SFTP server port.                                                               | `22`      |
+| `SFTP_BACKUP_USER`             | Username for the SFTP connection.                                                      | _(empty)_ |
+| `SFTP_BACKUP_PASSWORD`         | Password for the SFTP connection (if not using SSH key).                               | _(empty)_ |
+| `SFTP_BACKUP_PRIVATE_KEY_PATH` | Path to the SSH private key file for authentication.                                   | _(empty)_ |
+| `SFTP_BACKUP_PASSPHRASE`       | Optional passphrase for the SSH private key.                                           | _(empty)_ |
+| `SFTP_BACKUP_PATH`             | Remote path to backup. Append `/*` to backup each item in the directory independently. | _(empty)_ |
+| `SFTP_BACKUP_NAME`             | Friendly name for this SFTP target (defaults to host when empty).                      | _(empty)_ |
+| `SFTP_BACKUP_FOLDER_PATH`      | Base path to store SFTP backups on the remote storage.                                 | `sftp`    |
+
+#### SFTP Backup Modes
+
+The SFTP backup service supports the same two backup modes as the rsync service:
+
+**Single path mode (without `/*`):**
+
+```bash
+SFTP_BACKUP_PATH=/data/myapp
+```
+
+Downloads and archives the entire path as one `.tar.gz` with a timestamp. A new backup is created at each execution.
+
+**Multi-item mode (with `/*`):**
+
+```bash
+SFTP_BACKUP_PATH=/data/*
+```
+
+Lists the remote directory and archives each item individually **without timestamp**. If a backup already exists for an item, it is skipped.
 
 ### Storage Settings
 
