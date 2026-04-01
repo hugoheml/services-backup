@@ -24,9 +24,7 @@ export async function DumpDatabase(databaseName: string): Promise<string> {
 		`--port=${MYSQL_PORT_NUMBER}`,
 		'--databases',
 		databaseName,
-		'--lock-tables=false',
-		'--set-gtid-purged=OFF',
-		'--no-tablespaces'
+		'--lock-tables=false'
 	];
 
 	if (!MYSQL_SSL_ENABLED_BOOL) {
