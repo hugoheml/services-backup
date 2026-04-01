@@ -33,7 +33,7 @@ export async function DumpDatabase(databaseName: string): Promise<string> {
 		args.push('--skip-ssl');
 	}
 
-	const dumpProcess = spawn('mysqldump', args);
+	const dumpProcess = spawn('mariadb-dump', args);
 	const gzipProcess = spawn('gzip');
 
 	dumpProcess.stdout.pipe(gzipProcess.stdin);
