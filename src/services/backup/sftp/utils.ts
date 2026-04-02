@@ -149,21 +149,21 @@ async function listRemoteFilesRecursive(
 	baseRemotePath: string
 ): Promise<Array<{ remotePath: string; relativePath: string }>> {
 	const items = await client.list(remotePath);
-	const result: Array<{ remotePath: string; relativePath: string }> = [];
 
-	for (const item of items) {
-		const itemRemotePath = `${remotePath}/${item.name}`;
-		const itemRelativePath = itemRemotePath.slice(baseRemotePath.length + 1);
+	const files = items
+		.filter((item) => item.type !== "d")
+		.map((item) => {
+			const itemRemotePath = `${remotePath}/${item.name}`;
+			return { remotePath: itemRemotePath, relativePath: itemRemotePath.slice(baseRemotePath.length + 1) };
+		});
 
-		if (item.type === "d") {
-			const subItems = await listRemoteFilesRecursive(client, itemRemotePath, baseRemotePath);
-			result.push(...subItems);
-		} else {
-			result.push({ remotePath: itemRemotePath, relativePath: itemRelativePath });
-		}
-	}
+	const subResults = await Promise.all(
+		items
+			.filter((item) => item.type === "d")
+			.map((dir) => listRemoteFilesRecursive(client, `${remotePath}/${dir.name}`, baseRemotePath))
+	);
 
-	return result;
+	return [...files, ...subResults.flat()];
 }
 
 async function downloadDirParallel(
