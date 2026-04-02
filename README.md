@@ -292,6 +292,7 @@ services:
 | `SFTP_BACKUP_PRIVATE_KEY_PATH` | Path to the SSH private key file for authentication.                                   | _(empty)_ |
 | `SFTP_BACKUP_PASSPHRASE`       | Optional passphrase for the SSH private key.                                           | _(empty)_ |
 | `SFTP_BACKUP_PATH`             | Remote path to backup. Append `/*` to backup each item in the directory independently. | _(empty)_ |
+| `SFTP_BACKUP_FOLDERS`          | Comma-separated list of specific folder names to backup under `SFTP_BACKUP_PATH`.      | _(empty)_ |
 | `SFTP_BACKUP_NAME`             | Friendly name for this SFTP target (defaults to host when empty).                      | _(empty)_ |
 | `SFTP_BACKUP_FOLDER_PATH`      | Base path to store SFTP backups on the remote storage.                                 | `sftp`    |
 | `SFTP_BACKUP_CONCURRENCY`      | Number of parallel SFTP connections used when downloading a remote directory.          | `4`       |
@@ -315,6 +316,15 @@ SFTP_BACKUP_PATH=/data/*
 ```
 
 Lists the remote directory and archives each item individually **without timestamp**. If a backup already exists for an item, it is skipped.
+
+**Explicit folders mode (with `SFTP_BACKUP_FOLDERS`):**
+
+```bash
+SFTP_BACKUP_PATH=/data
+SFTP_BACKUP_FOLDERS=myapp,database,config
+```
+
+Instead of backing up everything under the base path, only the specified folders are backed up (`/data/myapp`, `/data/database`, `/data/config`). Each folder is archived individually without timestamp. Takes priority over `/*` wildcard mode when set.
 
 #### Parallel Downloads
 

@@ -31,7 +31,9 @@ export class SftpBackupService extends BackupService {
 		}
 
 		try {
-			if (this.target.path.endsWith("*")) {
+			if (this.target.folders && this.target.folders.length > 0) {
+				return await this.getExplicitFoldersBackup();
+			} else if (this.target.path.endsWith("*")) {
 				return await this.getMultipleBackups();
 			} else {
 				return await this.getSingleBackup();
@@ -40,6 +42,47 @@ export class SftpBackupService extends BackupService {
 			logger.error(`[sftp-backup] Failed to prepare backups: ${error}`);
 			throw error;
 		}
+	}
+
+	private async getExplicitFoldersBackup(): Promise<BackupFileMetadata[]> {
+		if (!this.target || !this.target.folders) {
+			return [];
+		}
+
+		const basePath = this.target.path.endsWith("/*")
+			? this.target.path.slice(0, -2)
+			: this.target.path.endsWith("*")
+				? this.target.path.slice(0, -1)
+				: this.target.path;
+
+		logger.info(`[sftp-backup] Using explicit folder list: ${this.target.folders.join(", ")}`);
+
+		const result: BackupFileMetadata[] = [];
+		const date = new Date();
+		const timestamp = buildTimestamp(date);
+
+		for (const folderName of this.target.folders) {
+			const sanitizedFolderName = sanitizeName(folderName);
+			const remotePath = `${basePath}/${folderName}`;
+			const uuid = `sftp-${sanitizeName(this.target.name)}-${sanitizedFolderName}-${timestamp}`;
+
+			this.pendingBackups.set(uuid, {
+				target: this.target,
+				itemName: folderName,
+				remotePath
+			});
+
+			result.push({
+				parentElement: `${this.target.name} - ${folderName}`,
+				destinationFolder: `${this.FOLDER_PATH}/${sanitizeName(this.target.name)}/${sanitizedFolderName}`,
+				fileName: `${sanitizedFolderName}.tar.gz`,
+				uuid,
+				size: 0,
+				date
+			});
+		}
+
+		return result;
 	}
 
 	private async getSingleBackup(): Promise<BackupFileMetadata[]> {

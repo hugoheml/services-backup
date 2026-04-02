@@ -20,6 +20,7 @@ const {
 	SFTP_BACKUP_PRIVATE_KEY_PATH,
 	SFTP_BACKUP_PASSPHRASE,
 	SFTP_BACKUP_PATH,
+	SFTP_BACKUP_FOLDERS,
 	SFTP_BACKUP_CONCURRENCY
 } = process.env;
 
@@ -31,6 +32,7 @@ export type SftpBackupTarget = {
 	port: number;
 	user: string;
 	path: string;
+	folders?: string[];
 	auth:
 		| { type: "key"; privateKeyPath: string; passphrase?: string }
 		| { type: "password"; password: string };
@@ -56,12 +58,17 @@ export function loadSftpBackupTarget(): SftpBackupTarget | undefined {
 
 	const port = SFTP_BACKUP_PORT ? Number(SFTP_BACKUP_PORT) : 22;
 
+	const folders = SFTP_BACKUP_FOLDERS
+		? SFTP_BACKUP_FOLDERS.split(",").map((f) => f.trim()).filter(Boolean)
+		: undefined;
+
 	return {
 		name: SFTP_BACKUP_NAME?.trim() || SFTP_BACKUP_HOST.trim(),
 		host: SFTP_BACKUP_HOST.trim(),
 		port: Number.isFinite(port) && port > 0 ? port : 22,
 		user: SFTP_BACKUP_USER.trim(),
 		path: SFTP_BACKUP_PATH.trim(),
+		folders,
 		auth
 	};
 }
