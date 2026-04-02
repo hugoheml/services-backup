@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { mkdirSync, rmSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { spawn } from "node:child_process";
 import SftpClient from "ssh2-sftp-client";
 import * as fs from "fs";
@@ -19,8 +19,11 @@ const {
 	SFTP_BACKUP_PASSWORD,
 	SFTP_BACKUP_PRIVATE_KEY_PATH,
 	SFTP_BACKUP_PASSPHRASE,
-	SFTP_BACKUP_PATH
+	SFTP_BACKUP_PATH,
+	SFTP_BACKUP_CONCURRENCY
 } = process.env;
+
+const DEFAULT_CONCURRENCY = 4;
 
 export type SftpBackupTarget = {
 	name: string;
@@ -140,6 +143,73 @@ export async function listRemoteItems(target: SftpBackupTarget, remotePath: stri
 	}
 }
 
+async function listRemoteFilesRecursive(
+	client: SftpClient,
+	remotePath: string,
+	baseRemotePath: string
+): Promise<Array<{ remotePath: string; relativePath: string }>> {
+	const items = await client.list(remotePath);
+	const result: Array<{ remotePath: string; relativePath: string }> = [];
+
+	for (const item of items) {
+		const itemRemotePath = `${remotePath}/${item.name}`;
+		const itemRelativePath = itemRemotePath.slice(baseRemotePath.length + 1);
+
+		if (item.type === "d") {
+			const subItems = await listRemoteFilesRecursive(client, itemRemotePath, baseRemotePath);
+			result.push(...subItems);
+		} else {
+			result.push({ remotePath: itemRemotePath, relativePath: itemRelativePath });
+		}
+	}
+
+	return result;
+}
+
+async function downloadDirParallel(
+	target: SftpBackupTarget,
+	remotePath: string,
+	localPath: string,
+	concurrency: number
+): Promise<void> {
+	const listClient = await createSftpClient(target);
+	let files: Array<{ remotePath: string; relativePath: string }>;
+	try {
+		files = await listRemoteFilesRecursive(listClient, remotePath, remotePath);
+	} finally {
+		await listClient.end();
+	}
+
+	if (files.length === 0) return;
+
+	for (const file of files) {
+		mkdirSync(dirname(join(localPath, file.relativePath)), { recursive: true });
+	}
+
+	logger.info(`[sftp-backup] Downloading ${files.length} files with concurrency=${concurrency}`);
+
+	const actualConcurrency = Math.min(concurrency, files.length);
+	const clients = await Promise.all(
+		Array.from({ length: actualConcurrency }, () => createSftpClient(target))
+	);
+
+	let index = 0;
+	try {
+		await Promise.all(
+			clients.map(async (client) => {
+				while (true) {
+					const fileIndex = index++;
+					if (fileIndex >= files.length) break;
+					const file = files[fileIndex];
+					await client.fastGet(file.remotePath, join(localPath, file.relativePath));
+				}
+			})
+		);
+	} finally {
+		await Promise.all(clients.map((c) => c.end().catch(() => {})));
+	}
+}
+
 export async function downloadAndArchive(
 	target: SftpBackupTarget,
 	remotePath: string,
@@ -155,19 +225,25 @@ export async function downloadAndArchive(
 
 	mkdirSync(workingDirectory, { recursive: true });
 
+	const concurrency = SFTP_BACKUP_CONCURRENCY ? Number(SFTP_BACKUP_CONCURRENCY) : DEFAULT_CONCURRENCY;
+
 	const client = await createSftpClient(target);
+	let isDirectory = false;
 	try {
 		logger.info(`[sftp-backup] Downloading "${remotePath}" from ${target.host}.`);
-
 		const stat = await client.stat(remotePath);
-		if (stat.isDirectory) {
-			await client.downloadDir(remotePath, workingDirectory);
-		} else {
+		isDirectory = stat.isDirectory;
+
+		if (!isDirectory) {
 			const localFilePath = join(workingDirectory, itemName || remotePath.split("/").pop() || "file");
 			await client.fastGet(remotePath, localFilePath);
 		}
 	} finally {
 		await client.end();
+	}
+
+	if (isDirectory) {
+		await downloadDirParallel(target, remotePath, workingDirectory, concurrency);
 	}
 
 	try {

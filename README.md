@@ -294,6 +294,7 @@ services:
 | `SFTP_BACKUP_PATH`             | Remote path to backup. Append `/*` to backup each item in the directory independently. | _(empty)_ |
 | `SFTP_BACKUP_NAME`             | Friendly name for this SFTP target (defaults to host when empty).                      | _(empty)_ |
 | `SFTP_BACKUP_FOLDER_PATH`      | Base path to store SFTP backups on the remote storage.                                 | `sftp`    |
+| `SFTP_BACKUP_CONCURRENCY`      | Number of parallel SFTP connections used when downloading a remote directory.          | `4`       |
 
 #### SFTP Backup Modes
 
@@ -314,6 +315,16 @@ SFTP_BACKUP_PATH=/data/*
 ```
 
 Lists the remote directory and archives each item individually **without timestamp**. If a backup already exists for an item, it is skipped.
+
+#### Parallel Downloads
+
+When backing up a remote directory, files are downloaded using multiple concurrent SFTP connections (default: 4). You can tune this with `SFTP_BACKUP_CONCURRENCY`:
+
+```bash
+SFTP_BACKUP_CONCURRENCY=8  # Use 8 parallel connections for faster downloads
+```
+
+Increase this value if your network and server can handle more simultaneous connections. Single-file backups are not affected.
 
 ### Storage Settings
 
