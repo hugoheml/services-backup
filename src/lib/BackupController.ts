@@ -44,7 +44,11 @@ export class BackupController {
 		}
 
 		for await (const file of oldFiles) {
-			await this.storageClass.deleteFile(file.filePath);
+			if (file.isDirectory) {
+				await this.storageClass.deleteFolder(file.filePath);
+			} else {
+				await this.storageClass.deleteFile(file.filePath);
+			}
 			logger.info(`Deleted old backup file: ${file.filePath}`);
 		}
 
@@ -69,7 +73,11 @@ export class BackupController {
 
 		for await (const file of filesToDelete) {
 			try {
-				await this.storageClass.deleteFile(file.filePath);
+				if (file.isDirectory) {
+					await this.storageClass.deleteFolder(file.filePath);
+				} else {
+					await this.storageClass.deleteFile(file.filePath);
+				}
 				logger.info(`Deleted old backup file: ${file.filePath}`);
 			} catch (err) {
 				logger.error(`Failed to delete old backup file ${file.filePath}: ${err}`);
@@ -197,7 +205,11 @@ export class BackupController {
 						const sortedTargetFiles = filesThatCanBeDeleted.sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime());
 						for (let i = 0; i < sortedTargetFiles.length - MAX_BACKUP_PER_ELEMENT + 1; i++) {
 							const fileToDelete = sortedTargetFiles[i];
-							await this.storageClass.deleteFile(fileToDelete.filePath);
+							if (fileToDelete.isDirectory) {
+								await this.storageClass.deleteFolder(fileToDelete.filePath);
+							} else {
+								await this.storageClass.deleteFile(fileToDelete.filePath);
+							}
 							logger.info(`Deleted old backup file: ${fileToDelete.filePath}`);
 						}
 					}
