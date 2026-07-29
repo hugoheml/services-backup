@@ -338,20 +338,24 @@ Increase this value if your network and server can handle more simultaneous conn
 
 ### Storage Settings
 
-| Variable                | Description                                                  | Default      |
-| ----------------------- | ------------------------------------------------------------ | ------------ |
-| `STORAGE_TYPE`          | The storage type to use. Supported: `ftp`, `sftp`, `local`.  | `local`      |
-| `LOCAL_STORAGE_PATH`    | Path to store backups when using local storage.              | `backups`    |
-| `FTP_HOST`              | Your FTP server host.                                        | `localhost`  |
-| `FTP_PORT`              | Your FTP server port.                                        | `21`         |
-| `FTP_USER`              | The username for the FTP connection.                         | `myuser`     |
-| `FTP_PASSWORD`          | The password for the FTP connection.                         | `mypassword` |
-| `SFTP_HOST`             | Your SFTP server host.                                       | `localhost`  |
-| `SFTP_PORT`             | Your SFTP server port.                                       | `22`         |
-| `SFTP_USER`             | The username for the SFTP connection.                        | `myuser`     |
-| `SFTP_PASSWORD`         | The password for the SFTP connection (if not using SSH key). | _(empty)_    |
-| `SFTP_PRIVATE_KEY_PATH` | Path to the SSH private key file for SFTP authentication.    | _(empty)_    |
-| `SFTP_PASSPHRASE`       | Optional passphrase for the SSH private key.                 | _(empty)_    |
+| Variable                | Description                                                                                                         | Default      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `STORAGE_TYPE`          | The storage type to use. Supported: `ftp`, `sftp`, `local`.                                                         | `local`      |
+| `LOCAL_STORAGE_PATH`    | Path to store backups when using local storage.                                                                     | `backups`    |
+| `FTP_HOST`              | Your FTP server host.                                                                                               | `localhost`  |
+| `FTP_PORT`              | Your FTP server port.                                                                                               | `21`         |
+| `FTP_USER`              | The username for the FTP connection.                                                                                | `myuser`     |
+| `FTP_PASSWORD`          | The password for the FTP connection.                                                                                | `mypassword` |
+| `FTP_TIMEOUT`           | Inactivity timeout in ms for the FTP connection (`0` to disable).                                                   | `120000`     |
+| `FTP_KEEPALIVE`         | TCP keep-alive in ms on the FTP control connection, keeps it alive while a large file is uploaded (`0` to disable). | `15000`      |
+| `FTP_RETRIES`           | Number of retries when the FTP connection drops during an operation.                                                | `2`          |
+| `FTP_RETRY_DELAY`       | Delay in ms before retrying a failed FTP operation.                                                                 | `5000`       |
+| `SFTP_HOST`             | Your SFTP server host.                                                                                              | `localhost`  |
+| `SFTP_PORT`             | Your SFTP server port.                                                                                              | `22`         |
+| `SFTP_USER`             | The username for the SFTP connection.                                                                               | `myuser`     |
+| `SFTP_PASSWORD`         | The password for the SFTP connection (if not using SSH key).                                                        | _(empty)_    |
+| `SFTP_PRIVATE_KEY_PATH` | Path to the SSH private key file for SFTP authentication.                                                           | _(empty)_    |
+| `SFTP_PASSPHRASE`       | Optional passphrase for the SSH private key.                                                                        | _(empty)_    |
 
 #### Using Local Storage
 You must also set `LOCAL_STORAGE_PATH` to the directory where backups will be stored.
