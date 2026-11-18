@@ -14,6 +14,7 @@ type PendingBackup = {
 export class RsyncBackupService extends BackupService {
 	SERVICE_NAME = "rsync";
 	FOLDER_PATH = RSYNC_FOLDER_PATH || "rsync";
+	override readonly retentionFolderDepth = 2;
 
 	private target: RsyncTarget | undefined;
 	private pendingBackups: Map<string, PendingBackup> = new Map();

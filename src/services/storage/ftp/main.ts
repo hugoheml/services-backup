@@ -63,11 +63,11 @@ export class FTPStorage extends StorageClass {
 		}
 	}
 
-	async deleteFolder(folderPath: string) {
+	async deleteEmptyFolder(folderPath: string): Promise<void> {
 		await this.client.cd('/');
 		
 		try {
-			await this.client.removeDir(folderPath);
+			await this.client.removeEmptyDir(folderPath);
 			logger.debug(`Deleted folder: ${folderPath}`);
 		} catch (error) {
 			logger.error(`Failed to delete folder ${folderPath}: ${error}`);

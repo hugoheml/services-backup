@@ -60,7 +60,7 @@ export class BackupController {
 
 		logger.warn(`Maximum backup limit reached for folder ${folderFiles[0].filePath}, needing to delete the oldest backups.`);
 		const sortedFiles = folderFilesThatCanBeDeleted.sort((a, b) => a.lastModified.getTime() - b.lastModified.getTime());
-		const filesToDelete = sortedFiles.slice(MAX_BACKUP_PER_ELEMENT);
+		const filesToDelete = sortedFiles.slice(0, sortedFiles.length - MAX_BACKUP_PER_ELEMENT);
 		
 		if (filesToDelete.length === 0) {
 			logger.debug(`No backups to delete in folder ${folderFiles[0].filePath}.`);
@@ -79,6 +79,32 @@ export class BackupController {
 		logger.info(`Removed ${filesToDelete.length} old backups from folder.`);
 	}
 
+	private async checkBackupFolder(folderPath: string, remainingDepth: number): Promise<void> {
+		const entries = await this.storageClass.listFiles(folderPath);
+		if (entries.length === 0) {
+			await this.storageClass.deleteEmptyFolder(folderPath);
+			logger.info(`Deleted empty backup folder: ${folderPath}`);
+			return;
+		}
+
+		let folderFiles = FileFilesToFileFilesWithRetention(entries);
+		const deletedFiles = await this.removeOldBackups(folderFiles);
+		if (deletedFiles.length > 0) {
+			logger.info(`Removed ${deletedFiles.length} old backups from folder: ${folderPath}`);
+			const remainingFiles = await this.storageClass.listFiles(folderPath);
+			folderFiles = FileFilesToFileFilesWithRetention(remainingFiles);
+		}
+		await this.removeBackupsIfExceedsLimit(folderFiles);
+
+		if (remainingDepth > 0) {
+			for (const entry of entries) {
+				if (entry.isDirectory) {
+					await this.checkBackupFolder(entry.filePath, remainingDepth - 1);
+				}
+			}
+		}
+	}
+
 	async doRestrictionsCheck() {
 		try {
 			const mainFolderExists = await this.storageClass.folderExists(this.backupService.FOLDER_PATH);
@@ -90,21 +116,8 @@ export class BackupController {
 				.filter(file => file.isDirectory)
 	
 			logger.info(`Checking for backups to delete due to retention policy...`);
-			for await (const folder of folders) {
-				const folderFiles = FileFilesToFileFilesWithRetention(await this.storageClass.listFiles(folder.filePath));
-				if (folderFiles.length === 0) {
-					await this.storageClass.deleteFolder(folder.filePath);
-					logger.info(`Deleted empty backup folder: ${folder.filePath}`);
-					continue;
-				}
-	
-				const deletedFolders = await this.removeOldBackups(folderFiles);
-				if (deletedFolders.length > 0) {
-					logger.info(`Removed ${deletedFolders.length} old backups from folder: ${folder.filePath}`);
-				}
-	
-				const actualFolderFiles = FileFilesToFileFilesWithRetention(await this.storageClass.listFiles(folder.filePath));
-				await this.removeBackupsIfExceedsLimit(actualFolderFiles);
+			for (const folder of folders) {
+				await this.checkBackupFolder(folder.filePath, this.backupService.retentionFolderDepth - 1);
 			}
 		} catch (error) {
 			logger.error(`Error occurred during backup restrictions check for ${this.backupService.SERVICE_NAME}: ${error}`);

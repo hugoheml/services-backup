@@ -54,10 +54,10 @@ export class LocalStorage extends StorageClass {
 		}
 	}
 
-	async deleteFolder(folderPath: string) {
+	async deleteEmptyFolder(folderPath: string): Promise<void> {
 		const fullPath = join(this.basePath, folderPath);
 		try {
-			await fs.rmdir(fullPath, { recursive: true });
+			await fs.rmdir(fullPath);
 			logger.debug(`Deleted folder: ${fullPath}`);
 		} catch (error) {
 			logger.error(`Failed to delete folder ${fullPath}: ${error}`);

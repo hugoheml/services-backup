@@ -26,7 +26,7 @@ if (PERIODIC_BACKUP_RETENTION && periodicBackupRetentionEnabled) {
 }
 
 export function FileFilesToFileFilesWithRetention(files: FileResult[]): FileResultWithRetention[] {
-	const filesWithRetention: FileResultWithRetention[] = files.map((file) => ({
+	const filesWithRetention: FileResultWithRetention[] = files.filter(file => !file.isDirectory).map((file) => ({
 		...file,
 		canBeDeleted: true,
 		additionalForTimes: [],
