@@ -3,6 +3,7 @@ import { BackupFileMetadata } from "./types/BackupFileMetadata";
 export abstract class BackupService {
 	abstract SERVICE_NAME: string;
 	abstract FOLDER_PATH: string;
+	readonly retentionFolderDepth: number = 1;
 
 	abstract init(): Promise<void>;
 	abstract getElementsToBackup(): Promise<BackupFileMetadata[]>;

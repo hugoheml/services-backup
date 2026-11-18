@@ -223,6 +223,8 @@ Result (assuming `/var/www/` contains `site1`, `site2`, `site3`):
 - Behavior: Backup only created if file doesn't exist
 - Storage: `rsync/target-name/site1/site1.tar.gz`, `rsync/target-name/site2/site2.tar.gz`, etc.
 
+Retention applies to archives within each item's folder. If an archive expires, the next run recreates it when the source item still exists.
+
 **Use Cases:**
 
 - **Single mode**: For backing up a complete application with versioning (database backups, complete application snapshots)

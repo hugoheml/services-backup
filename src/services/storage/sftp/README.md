@@ -86,7 +86,7 @@ All methods are inherited from `StorageClass`:
 - `uploadFile(filePath, destination)`: Uploads a file to the SFTP server
 - `deleteFile(filePath)`: Deletes a file from the SFTP server
 - `createFolder(folderPath)`: Creates a folder (recursive)
-- `deleteFolder(folderPath)`: Deletes a folder and its contents
+- `deleteEmptyFolder(folderPath)`: Deletes an empty folder
 - `folderExists(folderPath)`: Checks if a folder exists
 - `folderSizeBytes(folderPath)`: Calculates the total size of a folder
 - `listFiles(folderPath)`: Lists all files and folders in a directory

@@ -113,11 +113,11 @@ export class SFTPStorage extends StorageClass {
 		}
 	}
 
-	async deleteFolder(folderPath: string) {
+	async deleteEmptyFolder(folderPath: string): Promise<void> {
 		await this.connect();
 
 		try {
-			await this.client.rmdir(folderPath, true); // recursive = true
+			await this.client.rmdir(folderPath);
 			logger.debug(`Deleted folder: ${folderPath}`);
 		} catch (error) {
 			logger.error(`Failed to delete folder ${folderPath}: ${error}`);
