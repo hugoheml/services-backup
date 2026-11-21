@@ -87,7 +87,7 @@ Here is the list of environment variables you can configure:
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------- |
 | `LOG_LEVEL`                         | Log level (error, warn, info, http, verbose, debug, silly).                                                             | `info`    |
 | `TMP_DIR`                           | Temporary directory to store backups before uploading.                                                                  | `/tmp`    |
-| `MAX_BACKUP_PER_ELEMENT`            | Maximum number of backups to keep per server/database.                                                                  | `5`       |
+| `MAX_BACKUP_PER_ELEMENT`            | Maximum number of backups to keep per item, excluding backups protected by periodic retention.                         | `3`       |
 | `MAX_BACKUP_RETENTION_DAYS`         | Maximum retention duration in days for backups.                                                                         | `30`      |
 | `PERIODIC_BACKUP_RETENTION_ENABLED` | Enable periodic backup retention to keep specific backups at defined intervals (`true` or `false`).                     | `false`   |
 | `PERIODIC_BACKUP_RETENTION`         | Comma-separated list of time intervals (in minutes) and amounts to keep. Format: `interval1:amount1,interval2:amount2`. | _(empty)_ |
@@ -100,17 +100,17 @@ The `PERIODIC_BACKUP_RETENTION` setting allows you to define custom retention po
 
 **Examples:**
 
-- **Keep 1 backup every hour for the last 4 hours:**
+- **Keep up to 4 backups at least one hour apart:**
   ```
   PERIODIC_BACKUP_RETENTION=60:4
   ```
 
-- **Keep 1 backup every day for the last 7 days:**
+- **Keep up to 7 backups at least one day apart:**
   ```
   PERIODIC_BACKUP_RETENTION=1440:7
   ```
 
-- **Keep 1 backup every week for the last 4 weeks:**
+- **Keep up to 4 backups at least one week apart:**
   ```
   PERIODIC_BACKUP_RETENTION=10080:4
   ```
@@ -120,23 +120,23 @@ The `PERIODIC_BACKUP_RETENTION` setting allows you to define custom retention po
   PERIODIC_BACKUP_RETENTION=60:24,1440:7,10080:4,43800:3
   ```
   This example keeps:
-  - 24 backups: one for each of the last 24 hour periods
-  - 7 backups: one for each of the last 7 day periods
-  - 4 backups: one for each of the last 4 week periods
-  - 3 backups: one for each of the last 3 month periods
+  - Up to 24 backups at least 60 minutes apart
+  - Up to 7 backups at least 1,440 minutes apart
+  - Up to 4 backups at least 10,080 minutes apart
+  - Up to 3 backups at least 43,800 minutes apart
 
 - **Long-term archival policy:**
   ```
   PERIODIC_BACKUP_RETENTION=525600:2,262800:4,43800:6,10080:8,1440:14
   ```
   This example keeps:
-  - 2 backups: one for each of the last 2 year periods
-  - 4 backups: one for each of the last 4 six-month periods
-  - 6 backups: one for each of the last 6 month periods
-  - 8 backups: one for each of the last 8 week periods
-  - 14 backups: one for each of the last 14 day periods
+  - Up to 2 backups at least 525,600 minutes apart
+  - Up to 4 backups at least 262,800 minutes apart
+  - Up to 6 backups at least 43,800 minutes apart
+  - Up to 8 backups at least 10,080 minutes apart
+  - Up to 14 backups at least 1,440 minutes apart
 
-**Note:** When `PERIODIC_BACKUP_RETENTION_ENABLED=true`, backups that match these retention criteria will be preserved even if they exceed the `MAX_BACKUP_PER_ELEMENT` or `MAX_BACKUP_RETENTION_DAYS` limits. The system will keep the most recent backup within each time period defined.
+With `PERIODIC_BACKUP_RETENTION_ENABLED=true`, each rule starts with the newest backup in the folder, according to its modification time on the destination storage. It then picks the newest backup at least the configured interval older than the previous pick, until the rule reaches its count or runs out of eligible backups. Each picked backup is exempt from the normal age and count limits.
 
 ### Pterodactyl Settings
 

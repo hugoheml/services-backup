@@ -41,50 +41,33 @@ export function FileFilesToFileFilesWithRetention(files: FileResult[]): FileResu
 		return filesWithRetention;
 	}
 
-	const filesPerTime: {
-		[time: number]: FileResultWithRetention[]
-	} = {};
-
-	for (const file of filesWithRetention) {
-		for (const [time, amount] of Object.entries(formattedFilePerTime)) {
-			const timeInt = Number(time);
-			const amountInt = Number(amount);
-
-			filesPerTime[timeInt] = filesPerTime[timeInt] || [];
-
-			if (filesPerTime[timeInt].length == 0) {
-				filesPerTime[timeInt].push(file);
-				file.additionalForTimes.push(Number(time));
-			} else {
-				const lastFile = filesPerTime[timeInt][filesPerTime[timeInt].length - 1];
-
-				// If the time between the last marked file and the current one is greater than the allowed interval, mark it
-				if (lastFile && (file.lastModified.getTime() - lastFile.lastModified.getTime()) > (timeInt * 1000 * 60)) {
-					file.additionalForTimes.push(Number(time));
-					filesPerTime[timeInt].push(file);
-				}
-			}
-		}
-	}
-
-	// Remove some marked files to keep only the X last marked files per time (X = amountInt)
-	for (const [time, files] of Object.entries(filesPerTime)) {
-		const timeInt = Number(time);
-		const amountInt = formattedFilePerTime[timeInt];
-	
-		if (files.length > amountInt) {
-			for (let i = 0; i < files.length - amountInt; i++) {
-				files[i].additionalForTimes = files[i].additionalForTimes.filter(t => t !== timeInt);
-			}
-		}
-	}
-
-	const finalResult = filesWithRetention.map(f => {
-		return {
-			...f,
-			canBeDeleted: f.additionalForTimes.length === 0,
-		};
+	const newestFirst = filesWithRetention.filter(file => Number.isFinite(file.lastModified.getTime()));
+	newestFirst.sort((a, b) => {
+		return b.lastModified.getTime() - a.lastModified.getTime() || a.filePath.localeCompare(b.filePath);
 	});
 
-	return finalResult;
+	for (const [time, amount] of Object.entries(formattedFilePerTime)) {
+		const intervalMinutes = Number(time);
+		const intervalMs = intervalMinutes * 60_000;
+		let nextEligibleTimestamp = Infinity;
+		let kept = 0;
+
+		for (const file of newestFirst) {
+			if (kept >= amount) {
+				break;
+			}
+
+			const timestamp = file.lastModified.getTime();
+			if (timestamp > nextEligibleTimestamp) {
+				continue;
+			}
+
+			file.canBeDeleted = false;
+			file.additionalForTimes.push(intervalMinutes);
+			nextEligibleTimestamp = timestamp - intervalMs;
+			kept++;
+		}
+	}
+
+	return filesWithRetention;
 }
